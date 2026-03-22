@@ -103,7 +103,7 @@ const TeacherDashboard = () => {
             // Fetch fresh user data from backend to ensure subjects are loaded
             const fetchProfile = async () => {
                 try {
-                    const response = await axios.get(`http://localhost:5000/api/users/${loggedInUser.username}`);
+                    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/${loggedInUser.username}`);
                     const freshUser = { ...loggedInUser, ...response.data };
                     setUser(freshUser);
                     localStorage.setItem('user', JSON.stringify(freshUser)); // Update storage too
@@ -119,7 +119,7 @@ const TeacherDashboard = () => {
 
     const fetchFilters = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/enrollments/filters');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/enrollments/filters`);
             setFilters(response.data);
         } catch (error) {
             console.error('Error fetching filters:', error);
@@ -132,7 +132,7 @@ const TeacherDashboard = () => {
             return;
         }
         try {
-            const response = await axios.get('http://localhost:5000/api/enrollments/search', { params: searchParams });
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/enrollments/search`, { params: searchParams });
             setStudents(response.data);
 
             if (view === 'upload') {
@@ -178,7 +178,7 @@ const TeacherDashboard = () => {
                 hour: parseInt(searchParams.hour),
                 subject: searchParams.subject
             }));
-            await axios.post('http://localhost:5000/api/attendance', { attendanceRecords: records });
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/attendance`, { attendanceRecords: records });
             alert('Attendance uploaded successfully!');
             setStudents([]);
             setAttendanceList([]);
@@ -191,7 +191,7 @@ const TeacherDashboard = () => {
     const fetchOwnAttendance = async () => {
         if (!user) return;
         try {
-            const response = await axios.get(`http://localhost:5000/api/faculty-attendance/${user.username}`, {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/faculty-attendance/${user.username}`, {
                 params: dateRange
             });
             setOwnAttendanceRecords(response.data);
@@ -202,7 +202,7 @@ const TeacherDashboard = () => {
 
     const fetchGallery = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/gallery');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/gallery`);
             setGalleryItems(response.data);
         } catch (error) {
             console.error('Error fetching gallery:', error);
@@ -241,7 +241,7 @@ const TeacherDashboard = () => {
                 class: searchParams.class,
                 subject: searchParams.subject
             }));
-            await axios.post('http://localhost:5000/api/internal-marks', { marksRecords: records });
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/internal-marks`, { marksRecords: records });
             alert('Marks uploaded successfully!');
             setStudents([]);
             setMarksList([]);
@@ -261,7 +261,7 @@ const TeacherDashboard = () => {
                 category: feedbackData.category,
                 message: feedbackData.message
             };
-            await axios.post('http://localhost:5000/api/feedbacks', payload);
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/feedbacks`, payload);
             alert('Feedback submitted successfully to College Admin!');
             setFeedbackData({ ...feedbackData, message: '' });
         } catch (error) {

@@ -120,7 +120,7 @@ const ParentDashboard = () => {
     const fetchChildEnrollment = async (username) => {
         setLoading(true);
         try {
-            const response = await axios.get(`http://localhost:5000/api/enrollments/student/${username}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/enrollments/student/${username}`);
             setEnrollment(response.data);
         } catch (error) {
             console.error('No child enrollment found or error fetching:', error);
@@ -132,7 +132,7 @@ const ParentDashboard = () => {
     const fetchAttendance = async () => {
         if (!user) return;
         try {
-            const response = await axios.get(`http://localhost:5000/api/attendance/student/${user.username}`, {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/attendance/student/${user.username}`, {
                 params: dateRange
             });
             setAttendanceRecords(response.data);
@@ -149,7 +149,7 @@ const ParentDashboard = () => {
     const fetchInternalMarks = async () => {
         if (!user) return;
         try {
-            const response = await axios.get(`http://localhost:5000/api/internal-marks/student/${user.username}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/internal-marks/student/${user.username}`);
             setInternalMarks(response.data);
         } catch (error) {
             console.error('Error fetching internal marks:', error);
@@ -158,7 +158,7 @@ const ParentDashboard = () => {
 
     const fetchGallery = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/gallery');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/gallery`);
             setGalleryItems(response.data);
         } catch (error) {
             console.error('Error fetching gallery:', error);
@@ -175,7 +175,7 @@ const ParentDashboard = () => {
                 category: feedbackData.category,
                 message: feedbackData.message
             };
-            await axios.post('http://localhost:5000/api/feedbacks', payload);
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/feedbacks`, payload);
             alert('Feedback submitted successfully to College Admin!');
             setFeedbackData({ ...feedbackData, message: '' });
         } catch (error) {
@@ -475,7 +475,7 @@ const ParentDashboard = () => {
     const fetchPayments = async () => {
         if (!user) return;
         try {
-            const response = await axios.get(`http://localhost:5000/api/payments/parent/${user.username}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/payments/parent/${user.username}`);
             setPayments(response.data);
         } catch (error) {
             console.error('Error fetching payments:', error);
@@ -490,7 +490,7 @@ const ParentDashboard = () => {
                 paymentDate: paymentProcessData.date,
                 transactionId: paymentProcessData.method === 'UPI' ? `UPI_${Date.now()}` : 'CASH'
             };
-            await axios.post(`http://localhost:5000/api/payments/pay/${selectedPayment._id}`, payload);
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/payments/pay/${selectedPayment._id}`, payload);
             alert('Payment submitted successfully!');
             setSelectedPayment(null);
             fetchPayments();
@@ -503,7 +503,7 @@ const ParentDashboard = () => {
         try {
             let studentName = 'N/A';
             try {
-                const response = await axios.get('http://localhost:5000/api/users/role/student');
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/role/student`);
                 const studentUser = response.data.find(u => u.username === payment.parentUsername);
                 if (studentUser) {
                     studentName = studentUser.fullName;

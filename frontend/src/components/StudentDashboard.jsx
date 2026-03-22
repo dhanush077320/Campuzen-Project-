@@ -94,7 +94,7 @@ const StudentDashboard = () => {
     const fetchEnrollment = async (username) => {
         setLoading(true);
         try {
-            const response = await axios.get(`http://localhost:5000/api/enrollments/student/${username}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/enrollments/student/${username}`);
             setEnrollment(response.data);
         } catch (error) {
             console.error('No enrollment found or error fetching:', error);
@@ -106,7 +106,7 @@ const StudentDashboard = () => {
     const fetchAttendance = async () => {
         if (!user) return;
         try {
-            const response = await axios.get(`http://localhost:5000/api/attendance/student/${user.username}`, {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/attendance/student/${user.username}`, {
                 params: dateRange
             });
             setAttendanceRecords(response.data);
@@ -123,7 +123,7 @@ const StudentDashboard = () => {
     const fetchInternalMarks = async () => {
         if (!user) return;
         try {
-            const response = await axios.get(`http://localhost:5000/api/internal-marks/student/${user.username}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/internal-marks/student/${user.username}`);
             setInternalMarks(response.data);
         } catch (error) {
             console.error('Error fetching internal marks:', error);
@@ -132,7 +132,7 @@ const StudentDashboard = () => {
 
     const fetchGallery = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/gallery');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/gallery`);
             setGalleryItems(response.data);
         } catch (error) {
             console.error('Error fetching gallery:', error);
@@ -149,7 +149,7 @@ const StudentDashboard = () => {
                 category: feedbackData.category,
                 message: feedbackData.message
             };
-            await axios.post('http://localhost:5000/api/feedbacks', payload);
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/feedbacks`, payload);
             alert('Feedback submitted successfully to College Admin!');
             setFeedbackData({ ...feedbackData, message: '' });
         } catch (error) {

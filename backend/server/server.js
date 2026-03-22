@@ -42,8 +42,20 @@ app.post('/login/:role', async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials or role" });
         }
 
-        // Simplistic password check (In production, use bcrypt)
-        if (user.password !== password) {
+        // Support both plain text and bcrypt passwords during transition
+        let isMatch = false;
+        if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
+            isMatch = await user.matchPassword(password);
+        } else {
+            isMatch = (user.password === password);
+            // Optional: Automatically hash the password for next time
+            if (isMatch) {
+                user.password = password; // pre-save hook will hash it
+                await user.save();
+            }
+        }
+
+        if (!isMatch) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
@@ -111,7 +123,16 @@ app.get('/api/users', async (req, res) => {
 // Update User
 app.patch('/api/users/:id', async (req, res) => {
     try {
-        const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true }).select('-password');
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+        
+        // Update fields
+        Object.keys(req.body).forEach(key => {
+            user[key] = req.body[key];
+        });
+        
+        await user.save();
+        const updatedUser = await User.findById(user._id).select('-password');
         res.json(updatedUser);
     } catch (error) {
         console.error("Update User Error:", error);

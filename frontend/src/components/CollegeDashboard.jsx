@@ -224,7 +224,7 @@ const CollegeDashboard = () => {
                 return;
             }
             // Mark attendance in backend
-            const response = await axios.post('http://localhost:5000/api/faculty-attendance/scan', {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/faculty-attendance/scan`, {
                 username: scannedUser.username,
                 fullName: scannedUser.fullName,
                 role: scannedUser.role
@@ -243,7 +243,7 @@ const CollegeDashboard = () => {
 
     const fetchUsers = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/users');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users`);
             setUsers(response.data);
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -252,7 +252,7 @@ const CollegeDashboard = () => {
 
     const fetchEnrolledStudents = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/enrollments/search');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/enrollments/search`);
             setEnrolledStudentUsernames(response.data.map(stu => stu.username));
         } catch (error) {
             console.error('Error fetching enrolled students:', error);
@@ -261,11 +261,11 @@ const CollegeDashboard = () => {
 
     const fetchAllEnrollments = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/enrollments/search');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/enrollments/search`);
             const enrollmentDetails = [];
             for (const stu of response.data) {
                 try {
-                    const enrollRes = await axios.get(`http://localhost:5000/api/enrollments/student/${stu.username}`);
+                    const enrollRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/enrollments/student/${stu.username}`);
                     enrollmentDetails.push(enrollRes.data);
                 } catch (e) { /* skip */ }
             }
@@ -277,7 +277,7 @@ const CollegeDashboard = () => {
 
     const fetchFeedbacks = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/feedbacks');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/feedbacks`);
             setFeedbacks(response.data);
         } catch (error) {
             console.error('Error fetching feedbacks:', error);
@@ -287,7 +287,7 @@ const CollegeDashboard = () => {
     const handleDeleteFeedback = async (id) => {
         if (!window.confirm('Are you sure you want to delete this feedback?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/feedbacks/${id}`);
+            await axios.delete(`${import.meta.env.VITE_API_URL}/api/feedbacks/${id}`);
             alert('Feedback deleted successfully');
             fetchFeedbacks();
         } catch (error) {
@@ -302,7 +302,7 @@ const CollegeDashboard = () => {
 
     const handleToggleBlock = async (u) => {
         try {
-            const response = await axios.patch(`http://localhost:5000/api/users/${u._id}/toggle-block`);
+            const response = await axios.patch(`${import.meta.env.VITE_API_URL}/api/users/${u._id}/toggle-block`);
             alert(response.data.message);
             fetchUsers();
         } catch (error) {
@@ -314,7 +314,7 @@ const CollegeDashboard = () => {
     const handleDeleteUser = async (id) => {
         if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
         try {
-            await axios.delete(`http://localhost:5000/api/users/${id}`);
+            await axios.delete(`${import.meta.env.VITE_API_URL}/api/users/${id}`);
             alert("User deleted successfully");
             fetchUsers();
         } catch (error) {
@@ -335,7 +335,7 @@ const CollegeDashboard = () => {
 
     const handleSaveEdit = async () => {
         try {
-            await axios.patch(`http://localhost:5000/api/users/${editingUser._id}`, editingUser);
+            await axios.patch(`${import.meta.env.VITE_API_URL}/api/users/${editingUser._id}`, editingUser);
             alert("User updated successfully");
             handleCloseEdit();
             fetchUsers();
@@ -368,7 +368,7 @@ const CollegeDashboard = () => {
                 payload.department = teacherData.department;
                 payload.subject = teacherData.subject;
             }
-            await axios.post('http://localhost:5000/api/users', payload);
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/users`, payload);
             
             if (formData.role === 'student') {
                 const subjectsArray = enrollData.subjects.split(',').map(s => s.trim()).filter(s => s !== '');
@@ -380,7 +380,7 @@ const CollegeDashboard = () => {
                     semester: enrollData.semester,
                     subjects: subjectsArray 
                 };
-                await axios.post('http://localhost:5000/api/enrollments', payload);
+                await axios.post(`${import.meta.env.VITE_API_URL}/api/enrollments`, payload);
                 fetchEnrolledStudents();
             }
 
@@ -417,11 +417,11 @@ const CollegeDashboard = () => {
     const fetchFacultyForAttendance = async (role) => {
         try {
             // 1. Fetch users for the role
-            const usersRes = await axios.get(`http://localhost:5000/api/users/role/${role}`);
+            const usersRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/role/${role}`);
             const users = usersRes.data;
 
             // 2. Fetch attendance for the role/date
-            const attendanceRes = await axios.get(`http://localhost:5000/api/faculty-attendance/role/${role}`, {
+            const attendanceRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/faculty-attendance/role/${role}`, {
                 params: { date: attendanceDate }
             });
             const attendanceMap = {};
@@ -454,7 +454,7 @@ const CollegeDashboard = () => {
 
     const fetchGallery = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/gallery');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/gallery`);
             setGalleryItems(response.data);
         } catch (error) {
             console.error('Error fetching gallery:', error);
@@ -498,7 +498,7 @@ const CollegeDashboard = () => {
 
     const fetchEnrollmentFilters = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/enrollments/filters');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/enrollments/filters`);
             setEnrollmentFilters(response.data);
         } catch (error) {
             console.error('Error fetching filters:', error);
@@ -509,7 +509,7 @@ const CollegeDashboard = () => {
         if (notificationForm.role === 'student' || notificationForm.role === 'parent') {
             try {
                 const { department, batch, semester, class: className } = notificationForm;
-                const response = await axios.get('http://localhost:5000/api/enrollments/search', {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/enrollments/search`, {
                     params: { department, batch, semester, class: className }
                 });
                 setFilteredUsersCount(response.data.length);
@@ -527,7 +527,7 @@ const CollegeDashboard = () => {
     const handleSendNotification = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:5000/api/notifications/send-email', notificationForm);
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/notifications/send-email`, notificationForm);
             alert(response.data.message);
         } catch (error) {
             alert(error.response?.data?.message || 'Failed to send notification');
@@ -542,7 +542,7 @@ const CollegeDashboard = () => {
         }
 
         try {
-            await axios.post('http://localhost:5000/api/gallery', {
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/gallery`, {
                 eventName: galleryForm.eventName,
                 fileName: galleryForm.fileName,
                 fileType: galleryForm.fileType,
@@ -559,7 +559,7 @@ const CollegeDashboard = () => {
     const handleDeleteGalleryItem = async (id) => {
         if (!window.confirm('Are you sure you want to delete this event?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/gallery/${id}`);
+            await axios.delete(`${import.meta.env.VITE_API_URL}/api/gallery/${id}`);
             alert('Deleted successfully');
             fetchGallery();
         } catch (error) {
@@ -577,7 +577,7 @@ const CollegeDashboard = () => {
         e.preventDefault();
         try {
             const staff = facultyUsers.find(u => u.username === salaryForm.staffUsername);
-            await axios.post('http://localhost:5000/api/salary', {
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/salary`, {
                 ...salaryForm,
                 staffFullName: staff?.fullName || ''
             });
@@ -597,7 +597,7 @@ const CollegeDashboard = () => {
 
     const fetchAllPayments = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/payments/all');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/payments/all`);
             setAllPayments(response.data);
             // Default matching parents to all parents initially
             setMatchingParents(users.filter(u => u.role === 'parent'));
@@ -609,7 +609,7 @@ const CollegeDashboard = () => {
     const handleSearchMatchingParents = async () => {
         try {
             const { department, batch, semester, class: className } = paymentForm;
-            const response = await axios.get('http://localhost:5000/api/enrollments/search', {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/enrollments/search`, {
                 params: { department, batch, semester, class: className }
             });
             const studentUsernames = response.data.map(s => s.username);
@@ -632,7 +632,7 @@ const CollegeDashboard = () => {
     const handlePaymentRequestSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/payments/request', {
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/payments/request`, {
                 ...paymentForm,
                 collegeUsername: user.username
             });

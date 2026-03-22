@@ -100,7 +100,7 @@ const StaffDashboard = () => {
 
     const fetchGallery = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/gallery');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/gallery`);
             setGalleryItems(response.data);
         } catch (error) {
             console.error('Error fetching gallery:', error);
@@ -115,7 +115,7 @@ const StaffDashboard = () => {
     const fetchAttendance = async () => {
         if (!user) return;
         try {
-            const response = await axios.get(`http://localhost:5000/api/faculty-attendance/${user.username}`, {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/faculty-attendance/${user.username}`, {
                 params: dateRange
             });
             setAttendanceRecords(response.data);
@@ -127,7 +127,7 @@ const StaffDashboard = () => {
     const fetchSalary = async () => {
         if (!user) return;
         try {
-            const response = await axios.get(`http://localhost:5000/api/salary/staff/${user.username}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/salary/staff/${user.username}`);
             setSalaryRecords(response.data);
         } catch (error) {
             console.error('Error fetching salary:', error);
@@ -144,7 +144,7 @@ const StaffDashboard = () => {
                 category: feedbackData.category,
                 message: feedbackData.message
             };
-            await axios.post('http://localhost:5000/api/feedbacks', payload);
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/feedbacks`, payload);
             alert('Feedback submitted successfully to College Admin!');
             setFeedbackData({ ...feedbackData, message: '' });
         } catch (error) {

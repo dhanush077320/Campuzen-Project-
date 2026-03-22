@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const UserSchema = new mongoose.Schema({
     fullName: { type: String, required: true },
@@ -16,5 +17,24 @@ const UserSchema = new mongoose.Schema({
 // Allow same username for different roles (e.g., student "Jipin_123" and parent "Jipin_123")
 // but prevent duplicate username within the same role
 UserSchema.index({ username: 1, role: 1 }, { unique: true });
+
+// Hash password before saving
+UserSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) {
+        return next();
+    }
+    try {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Compare password
+UserSchema.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
 
 module.exports = mongoose.model('User', UserSchema);

@@ -24,7 +24,7 @@ const UnifiedLogin = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axios.post(`http://localhost:5000/login/${role}`, { id, password });
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/login/${role}`, { id, password });
             if (response.status === 200) {
                 localStorage.setItem('user', JSON.stringify(response.data.user));
                 navigate(`/${role}-dashboard`);
