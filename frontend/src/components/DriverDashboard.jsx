@@ -114,53 +114,49 @@ const DriverDashboard = () => {
             }).openTooltip();
         }
 
-        // Draw Route and Stops if available - Moved outside marker check
+        // Draw Route and Stops if available
         if (view === 'map' && mapInstanceRef.current && user && user.startingPointCoords && user.endPointCoords) {
-            // Clear existing layers if needed (optional, for safety)
-            // L.polyline... 
-            // etc
-            
             const routeCoords = [
-                    [user.startingPointCoords.lat, user.startingPointCoords.lng],
-                    ...(user.stopCoords || []).map(s => [s.lat, s.lng]),
-                    [user.endPointCoords.lat, user.endPointCoords.lng]
-                ];
+                [user.startingPointCoords.lat, user.startingPointCoords.lng],
+                ...(user.stopCoords || []).map(s => [s.lat, s.lng]),
+                [user.endPointCoords.lat, user.endPointCoords.lng]
+            ];
 
-                // Draw black route line
-                L.polyline(routeCoords, {
+            // Draw black route line
+            L.polyline(routeCoords, {
+                color: '#000000',
+                weight: 6,
+                opacity: 1,
+                lineJoin: 'round'
+            }).addTo(mapInstanceRef.current);
+
+            // Add circular markers for stops
+            const allPoints = [
+                { ...user.startingPointCoords, name: user.startingPoint || 'Start' },
+                ...(user.stopCoords || []),
+                { ...user.endPointCoords, name: user.endPoint || 'End' }
+            ];
+
+            allPoints.forEach((point) => {
+                const circle = L.circleMarker([point.lat, point.lng], {
+                    radius: 8,
+                    fillColor: '#ffffff',
+                    fillOpacity: 1,
                     color: '#000000',
-                    weight: 6,
-                    opacity: 1,
-                    lineJoin: 'round'
+                    weight: 3
                 }).addTo(mapInstanceRef.current);
 
-                // Add circular markers for stops
-                const allPoints = [
-                    { ...user.startingPointCoords, name: user.startingPoint || 'Start' },
-                    ...(user.stopCoords || []),
-                    { ...user.endPointCoords, name: user.endPoint || 'End' }
-                ];
-
-                allPoints.forEach((point, idx) => {
-                    const circle = L.circleMarker([point.lat, point.lng], {
-                        radius: 8,
-                        fillColor: '#ffffff',
-                        fillOpacity: 1,
-                        color: '#000000',
-                        weight: 3
-                    }).addTo(mapInstanceRef.current);
-
-                    circle.bindTooltip(`<div style="color: #333; font-weight: 800; font-size: 11px;">${point.name}</div>`, {
-                        permanent: true,
-                        direction: 'right',
-                        className: 'stop-label-tooltip',
-                        offset: [10, 0]
-                    });
+                circle.bindTooltip(`<div style="color: #333; font-weight: 800; font-size: 11px;">${point.name}</div>`, {
+                    permanent: true,
+                    direction: 'right',
+                    className: 'stop-label-tooltip',
+                    offset: [10, 0]
                 });
+            });
 
-                // Fit map to route
-                mapInstanceRef.current.fitBounds(routeCoords, { padding: [50, 50] });
-            }
+            // Fit map to route
+            mapInstanceRef.current.fitBounds(routeCoords, { padding: [50, 50] });
+        }
     }, [view, user]);
 
 
