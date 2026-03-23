@@ -177,6 +177,18 @@ app.get('/api/users/role/:role', async (req, res) => {
     }
 });
 
+// Get next available bus number
+app.get('/api/users/next-bus-number', async (req, res) => {
+    try {
+        const lastDriver = await User.findOne({ role: 'driver' }).sort({ busNumber: -1 });
+        const nextBusNumber = lastDriver && lastDriver.busNumber ? lastDriver.busNumber + 1 : 1;
+        res.status(200).json({ nextBusNumber });
+    } catch (error) {
+        console.error("Next Bus Number Error:", error);
+        res.status(500).json({ message: "Failed to fetch next bus number" });
+    }
+});
+
 // Get user by username
 app.get('/api/users/:username', async (req, res) => {
     try {
