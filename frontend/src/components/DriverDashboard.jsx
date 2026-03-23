@@ -124,8 +124,8 @@ const DriverDashboard = () => {
                 // Draw black route line
                 L.polyline(routeCoords, {
                     color: '#000000',
-                    weight: 4,
-                    opacity: 0.8,
+                    weight: 6,
+                    opacity: 1,
                     lineJoin: 'round'
                 }).addTo(mapInstanceRef.current);
 
@@ -138,17 +138,18 @@ const DriverDashboard = () => {
 
                 allPoints.forEach((point, idx) => {
                     const circle = L.circleMarker([point.lat, point.lng], {
-                        radius: 6,
+                        radius: 8,
                         fillColor: '#ffffff',
                         fillOpacity: 1,
                         color: '#000000',
-                        weight: 2
+                        weight: 3
                     }).addTo(mapInstanceRef.current);
 
-                    circle.bindTooltip(point.name, {
-                        permanent: false,
-                        direction: 'top',
-                        className: 'stop-tooltip'
+                    circle.bindTooltip(`<div style="color: #333; font-weight: 800; font-size: 11px;">${point.name}</div>`, {
+                        permanent: true,
+                        direction: 'right',
+                        className: 'stop-label-tooltip',
+                        offset: [10, 0]
                     });
                 });
 
@@ -547,6 +548,8 @@ const DriverDashboard = () => {
                     .dispatch-tooltip { background: rgba(15, 23, 42, 0.98) !important; border: 1px solid rgba(255,255,255,0.15) !important; color: white !important; font-weight: 900 !important; font-size: 11px !important; letter-spacing: 1.5px !important; padding: 4px 12px !important; border-radius: 6px !important; box-shadow: 0 10px 15px rgba(0,0,0,0.4) !important; }
                     .dispatch-tooltip::before { border-top-color: rgba(15, 23, 42, 0.98) !important; }
                     .stop-tooltip { background: #000000 !important; border: 1px solid white !important; color: white !important; font-weight: 800 !important; font-size: 10px !important; border-radius: 4px !important; padding: 2px 8px !important; }
+                    .stop-label-tooltip { background: transparent !important; border: none !important; box-shadow: none !important; color: #333 !important; font-weight: 800 !important; text-shadow: 0 0 3px white, 0 0 3px white !important; }
+                    .stop-label-tooltip::before { display: none !important; }
                 `}
             </style>
         </Box>

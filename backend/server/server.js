@@ -63,14 +63,29 @@ app.post('/login/:role', async (req, res) => {
             return res.status(403).json({ message: "Your account has been blocked. Please contact administrator." });
         }
 
+        // For drivers, we need the itinerary details
+        const userData = {
+            username: user.username,
+            role: user.role,
+            fullName: user.fullName,
+            photo: user.photo,
+        };
+
+        if (user.role === 'driver') {
+            userData.startingPoint = user.startingPoint;
+            userData.nextDestination = user.nextDestination;
+            userData.endPoint = user.endPoint;
+            userData.stops = user.stops;
+            userData.startingPointCoords = user.startingPointCoords;
+            userData.nextDestinationCoords = user.nextDestinationCoords;
+            userData.endPointCoords = user.endPointCoords;
+            userData.stopCoords = user.stopCoords;
+            userData.busNumber = user.busNumber;
+        }
+
         return res.status(200).json({
             message: "Login successful",
-            user: {
-                username: user.username,
-                role: user.role,
-                fullName: user.fullName,
-                photo: user.photo
-            }
+            user: userData
         });
     } catch (error) {
         console.error("Login Error:", error);
