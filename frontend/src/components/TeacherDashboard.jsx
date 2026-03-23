@@ -9,7 +9,8 @@ import {
 } from '@mui/material';
 import {
     CloudUpload, Search, History, CalendarToday, Collections, Event,
-    Dashboard, ExitToApp, Notifications, AccountCircle, RateReview, Menu as MenuIcon
+    Dashboard, ExitToApp, Notifications, AccountCircle, RateReview, Menu as MenuIcon,
+    DirectionsBus
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -88,6 +89,13 @@ const TeacherDashboard = () => {
         category: 'Academic',
         message: ''
     });
+
+    // Bus Tracking State
+    const [busNumberInput, setBusNumberInput] = useState('');
+    const [trackedBus, setTrackedBus] = useState(null);
+    const trackingMapRef = React.useRef(null);
+    const trackingMarkerRef = React.useRef(null);
+    const trackingIntervalRef = React.useRef(null);
 
     const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -214,6 +222,80 @@ const TeacherDashboard = () => {
             fetchGallery();
         }
     }, [view]);
+
+    const fetchBusLocation = async (busNo) => {
+        try {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/bus-location/${busNo}`);
+            const data = response.data;
+            setTrackedBus(data);
+            
+            if (trackingMarkerRef.current && trackingMapRef.current) {
+                const newPos = [data.latitude, data.longitude];
+                trackingMarkerRef.current.setLatLng(newPos);
+                trackingMapRef.current.panTo(newPos, { animate: true });
+            }
+        } catch (error) {
+            console.error("Tracking Error:", error);
+            alert(error.response?.data?.message || "Bus not found or offline");
+            stopBusTracking();
+        }
+    };
+
+    const startBusTracking = () => {
+        if (!busNumberInput) return;
+        fetchBusLocation(busNumberInput); // Initial fetch
+        if (trackingIntervalRef.current) clearInterval(trackingIntervalRef.current);
+        trackingIntervalRef.current = setInterval(() => {
+            fetchBusLocation(busNumberInput);
+        }, 5000); 
+    };
+
+    const stopBusTracking = () => {
+        if (trackingIntervalRef.current) {
+            clearInterval(trackingIntervalRef.current);
+            trackingIntervalRef.current = null;
+        }
+        setTrackedBus(null);
+        trackingMapRef.current = null;
+        trackingMarkerRef.current = null;
+    };
+
+    useEffect(() => {
+        if (trackedBus && !trackingMapRef.current) {
+            const L = window.L;
+            setTimeout(() => {
+                const container = document.getElementById('tracking-map');
+                if (!container || trackingMapRef.current) return;
+
+                const map = L.map(container, {
+                    zoomControl: false,
+                    attributionControl: false
+                }).setView([trackedBus.latitude, trackedBus.longitude], 16);
+
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    maxZoom: 19
+                }).addTo(map);
+
+                const busIcon = L.divIcon({
+                    html: `<div style="background-color: ${dark.accent}; border: 2px solid white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px ${dark.accent};">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                                <path d="M18,11H6V6h12V11z M16.5,17c0.83,0,1.5-0.67,1.5-1.5S17.33,14,16.5,14S15,14.67,15,15.5S15.67,17,16.5,17z M7.5,17 c0.83,0,1.5-0.67,1.5-1.5S8.33,14,7.5,14S6,14.67,6,15.5S6.67,17,7.5,17z M4,16c0,0.88,0.39,1.67,1,2.22V20c0,0.55,0.45,1,1,1h1 c0.55,0,1-0.45,1-1v-1h8v1c0,0.55,0.45,1,1,1h1c0.55,0,1-0.45,1-1v-1.78c0.61-0.55,1-1.34,1-2.22V6c0-3.5-3.58-4-8-4s-8,0.5-8,4V16z" />
+                            </svg>
+                           </div>`,
+                    className: 'bus-tracking-icon',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+
+                trackingMarkerRef.current = L.marker([trackedBus.latitude, trackedBus.longitude], { icon: busIcon }).addTo(map);
+                trackingMapRef.current = map;
+            }, 100);
+        }
+    }, [trackedBus]);
+
+    useEffect(() => {
+        return () => stopBusTracking();
+    }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('user');
@@ -837,6 +919,7 @@ const TeacherDashboard = () => {
                         { text: 'Upload Attendance', icon: <CloudUpload />, val: 'upload' },
                         { text: 'Upload Marks', icon: <RateReview />, val: 'marks' },
                         { text: 'Event Gallery', icon: <Collections />, val: 'gallery' },
+                        { text: 'Bus Tracking', icon: <DirectionsBus />, val: 'tracking' },
                         { text: 'Feedback Portal', icon: <RateReview />, val: 'feedback' },
                     ].map((item) => (
                         <ListItemButton
@@ -920,7 +1003,8 @@ const TeacherDashboard = () => {
                             view === 'upload' ? renderUploadAttendance() :
                                 view === 'marks' ? renderUploadMarks() :
                                     view === 'gallery' ? renderGallery() :
-                                        renderFeedback()}
+                                        view === 'tracking' ? renderBusTracking() :
+                                            renderFeedback()}
                 </Container>
             </Box>
         </Box>

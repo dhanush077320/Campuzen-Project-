@@ -7,11 +7,15 @@ const UserSchema = new mongoose.Schema({
     password: { type: String, required: true },
     email: { type: String },
     phoneNumber: { type: String },
-    role: { type: String, required: true, enum: ['student', 'teacher', 'college', 'parent', 'staff'] },
+    role: { type: String, required: true, enum: ['student', 'teacher', 'college', 'parent', 'staff', 'driver'] },
     department: { type: String },
     subject: { type: String },
+    busNumber: { type: Number },
     photo: { type: String },
     isBlocked: { type: Boolean, default: false },
+    latitude: { type: Number },
+    longitude: { type: Number },
+    isOnline: { type: Boolean, default: false },
 }, { timestamps: true });
 
 // Allow same username for different roles (e.g., student "Jipin_123" and parent "Jipin_123")

@@ -5,6 +5,7 @@ import StudentDashboard from './components/StudentDashboard.jsx';
 import TeacherDashboard from './components/TeacherDashboard.jsx';
 import ParentDashboard from './components/ParentDashboard.jsx';
 import StaffDashboard from './components/StaffDashboard.jsx';
+import DriverDashboard from './components/DriverDashboard.jsx';
 import { Route, Routes } from 'react-router-dom';
 
 const App = () => {
@@ -18,6 +19,7 @@ const App = () => {
         <Route path='/teacher-dashboard' element={<TeacherDashboard />} />
         <Route path='/parent-dashboard' element={<ParentDashboard />} />
         <Route path='/staff-dashboard' element={<StaffDashboard />} />
+        <Route path='/driver-dashboard' element={<DriverDashboard />} />
       </Routes>
     </div>
   );

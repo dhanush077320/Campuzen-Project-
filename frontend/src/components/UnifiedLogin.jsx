@@ -141,6 +141,7 @@ const UnifiedLogin = () => {
                                             <MenuItem value="college">College</MenuItem>
                                             <MenuItem value="parent">Parent</MenuItem>
                                             <MenuItem value="staff">Staff</MenuItem>
+                                            <MenuItem value="driver">Driver</MenuItem>
                                         </Select>
                                     </FormControl>
 

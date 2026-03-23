@@ -190,6 +190,47 @@ app.get('/api/users/next-bus-number', async (req, res) => {
     }
 });
 
+// --- Bus Tracking Routes ---
+
+// Update Driver Location
+app.post('/api/users/update-location', async (req, res) => {
+    const { username, latitude, longitude, isOnline } = req.body;
+    try {
+        await User.findOneAndUpdate(
+            { username, role: 'driver' },
+            { latitude, longitude, isOnline },
+            { new: true }
+        );
+        res.status(200).json({ message: "Location updated" });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to update location" });
+    }
+});
+
+// Get Bus Location
+app.get('/api/users/bus-location/:busNumber', async (req, res) => {
+    try {
+        const driver = await User.findOne({ 
+            busNumber: parseInt(req.params.busNumber), 
+            role: 'driver',
+            isOnline: true 
+        });
+        
+        if (!driver) {
+            return res.status(404).json({ message: "Bus is currently offline or not found" });
+        }
+        
+        res.status(200).json({ 
+            latitude: driver.latitude, 
+            longitude: driver.longitude,
+            driverName: driver.fullName,
+            lastUpdated: driver.updatedAt
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching bus location" });
+    }
+});
+
 // Get user by username
 app.get('/api/users/:username', async (req, res) => {
     try {
