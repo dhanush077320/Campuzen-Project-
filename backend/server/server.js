@@ -283,20 +283,32 @@ app.post('/api/faculty-attendance', async (req, res) => {
 // NEW: Mark faculty attendance via QR scan
 app.post('/api/faculty-attendance/scan', async (req, res) => {
     const { username, fullName, role } = req.body;
-    // Current date at 00:00:00
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
-    const now = new Date();
-    // Current time string (e.g., "10:45 AM")
-    const currentTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    // Always use IST (UTC+5:30) regardless of server timezone
+    const nowUTC = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in ms
+    const nowIST = new Date(nowUTC.getTime() + istOffset);
 
-    // Status: Before 9:00 AM -> Present, 9:00 AM to 2:00 PM -> Half day, After 2:00 PM -> Absent
-    const hours = now.getHours();
+    // Today at midnight IST (stored as UTC equivalent)
+    const todayIST = new Date(Date.UTC(
+        nowIST.getUTCFullYear(),
+        nowIST.getUTCMonth(),
+        nowIST.getUTCDate(),
+        0, 0, 0, 0
+    ));
+
+    // Current time string in IST
+    const istHours = nowIST.getUTCHours();
+    const istMinutes = nowIST.getUTCMinutes();
+    const ampm = istHours >= 12 ? 'PM' : 'AM';
+    const displayHour = istHours % 12 || 12;
+    const currentTime = `${String(displayHour).padStart(2, '0')}:${String(istMinutes).padStart(2, '0')} ${ampm}`;
+
+    // Status based on IST hours: Before 9 AM -> Present, 9 AM to 2 PM -> Half day, After 2 PM -> Absent
     let status = 'Absent';
-    if (hours < 9) {
+    if (istHours < 9) {
         status = 'Present';
-    } else if (hours < 14) {
+    } else if (istHours < 14) {
         status = 'Half day';
     } else {
         status = 'Absent';
@@ -304,7 +316,7 @@ app.post('/api/faculty-attendance/scan', async (req, res) => {
 
     try {
         // 1 day only 1 time - check if record already exists
-        const existing = await FacultyAttendance.findOne({ username, date: today });
+        const existing = await FacultyAttendance.findOne({ username, date: todayIST });
         if (existing) {
             return res.status(400).json({ message: "Attendance already marked for today" });
         }
@@ -313,7 +325,7 @@ app.post('/api/faculty-attendance/scan', async (req, res) => {
             username, 
             fullName, 
             role, 
-            date: today, 
+            date: todayIST, 
             status: status,
             time: currentTime 
         });
@@ -352,8 +364,16 @@ app.get('/api/faculty-attendance/role/:role', async (req, res) => {
 
     if (!date) return res.status(400).json({ message: "Date is required" });
 
-    const searchDate = new Date(date);
-    searchDate.setHours(0, 0, 0, 0);
+    // Parse the date and create an IST-normalized date (midnight IST stored as UTC)
+    const inputDate = new Date(date);
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const inputIST = new Date(inputDate.getTime() + istOffset);
+    const searchDate = new Date(Date.UTC(
+        inputIST.getUTCFullYear(),
+        inputIST.getUTCMonth(),
+        inputIST.getUTCDate(),
+        0, 0, 0, 0
+    ));
 
     try {
         const query = { date: searchDate };
