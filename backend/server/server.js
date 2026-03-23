@@ -82,7 +82,7 @@ app.post('/login/:role', async (req, res) => {
 
 // Create User
 app.post('/api/users', async (req, res) => {
-    const { fullName, username, password, email, phoneNumber, role, photo, department, subject } = req.body;
+    const { fullName, username, password, email, phoneNumber, role, photo, department, subject, busNumber } = req.body;
 
     try {
         const existingUser = await User.findOne({ username, role });
@@ -99,7 +99,8 @@ app.post('/api/users', async (req, res) => {
             role,
             photo,
             department,
-            subject
+            subject,
+            busNumber
         });
 
         await newUser.save();
