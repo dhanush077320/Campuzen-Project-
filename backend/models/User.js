@@ -16,6 +16,10 @@ const UserSchema = new mongoose.Schema({
     latitude: { type: Number },
     longitude: { type: Number },
     isOnline: { type: Boolean, default: false },
+    startingPoint: { type: String },
+    endPoint: { type: String },
+    nextDestination: { type: String },
+    stops: [{ type: String }],
 }, { timestamps: true });
 
 // Allow same username for different roles (e.g., student "Jipin_123" and parent "Jipin_123")

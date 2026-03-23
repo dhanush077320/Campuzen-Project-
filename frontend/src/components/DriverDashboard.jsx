@@ -312,6 +312,35 @@ const DriverDashboard = () => {
                                         </Grid>
                                     ))}
                                 </Grid>
+
+                                <Divider sx={{ my: 4, borderColor: 'rgba(255,255,255,0.1)' }} />
+                                <Typography variant="h6" sx={{ color: dark.accent, fontWeight: 900, mb: 3, textTransform: 'uppercase' }}>Assigned Route Information</Typography>
+                                <Grid container spacing={3}>
+                                    {[
+                                        { label: 'STARTING POINT', value: user?.startingPoint, color: '#4dabf5' },
+                                        { label: 'NEXT DESTINATION', value: user?.nextDestination, color: '#ff9800' },
+                                        { label: 'END POINT', value: user?.endPoint, color: '#f44336' }
+                                    ].map((route, idx) => (
+                                        <Grid item xs={12} sm={4} key={idx}>
+                                            <Paper sx={{ p: 2, borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.02)', border: `1px solid ${dark.border}` }}>
+                                                <Typography variant="caption" sx={{ color: route.color, fontWeight: 900 }}>{route.label}</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 700, color: 'white' }}>{route.value || 'N/A'}</Typography>
+                                            </Paper>
+                                        </Grid>
+                                    ))}
+                                    {user?.stops?.length > 0 && (
+                                        <Grid item xs={12}>
+                                             <Paper sx={{ p: 2, borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.02)', border: `1px solid ${dark.border}` }}>
+                                                <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 900 }}>PLANNED STOPS</Typography>
+                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                                                    {user.stops.map((stop, i) => (
+                                                        <Chip key={i} label={stop} size="small" sx={{ bgcolor: 'rgba(124, 77, 255, 0.1)', color: dark.accent, fontWeight: 700, border: '1px solid rgba(124, 77, 255, 0.2)' }} />
+                                                    ))}
+                                                </Box>
+                                            </Paper>
+                                        </Grid>
+                                    )}
+                                </Grid>
                              </Box>
                         </Paper>
                     )}
@@ -420,7 +449,43 @@ const DriverDashboard = () => {
                 </Toolbar>
             </AppBar>
 
-            {/* Floating Info Cards Removed */}
+            {/* Floating Info Cards */}
+            {isDutyOn && user && view === 'map' && (
+                <Box sx={{ position: 'absolute', top: 100, right: 30, zIndex: 10, width: 300 }}>
+                    <Paper elevation={24} sx={{ p: 3, borderRadius: '24px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, backdropFilter: 'blur(15px)' }}>
+                        <Typography variant="overline" sx={{ color: dark.accent, fontWeight: 900, letterSpacing: '2px' }}>LIVE ITINERARY</Typography>
+                        <Divider sx={{ my: 1.5, borderColor: dark.border }} />
+                        
+                        <Box sx={{ mb: 2 }}>
+                            <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 800, display: 'block' }}>STARTING POINT</Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 800, color: dark.text }}>{user.startingPoint || 'NOT SET'}</Typography>
+                        </Box>
+
+                        <Box sx={{ mb: 2 }}>
+                            <Typography variant="caption" sx={{ color: '#ff9800', fontWeight: 800, display: 'block' }}>NEXT DESTINATION</Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 800, color: dark.text }}>{user.nextDestination || 'NOT SET'}</Typography>
+                        </Box>
+
+                        {user.stops && user.stops.length > 0 && (
+                            <Box sx={{ mb: 2 }}>
+                                <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 800, display: 'block' }}>PLANNED STOPS</Typography>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                    {user.stops.map((stop, i) => (
+                                        <Typography key={i} variant="body2" sx={{ fontWeight: 700, color: dark.textSecondary, display: 'flex', alignItems: 'center' }}>
+                                            <Circle sx={{ fontSize: 6, mr: 1, color: dark.accent }} /> {stop}
+                                        </Typography>
+                                    ))}
+                                </Box>
+                            </Box>
+                        )}
+
+                        <Box>
+                            <Typography variant="caption" sx={{ color: dark.success, fontWeight: 800, display: 'block' }}>END POINT</Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 800, color: dark.text }}>{user.endPoint || 'NOT SET'}</Typography>
+                        </Box>
+                    </Paper>
+                </Box>
+            )}
 
             {/* Overlay Content (Gallery, Feedback, Profile) */}
             {renderOverlayContent()}
