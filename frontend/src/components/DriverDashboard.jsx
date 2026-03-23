@@ -161,7 +161,6 @@ const DriverDashboard = () => {
                 // Fit map to route
                 mapInstanceRef.current.fitBounds(routeCoords, { padding: [50, 50] });
             }
-        }
     }, [view, user]);
 
 
