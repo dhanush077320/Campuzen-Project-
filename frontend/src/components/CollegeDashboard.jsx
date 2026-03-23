@@ -13,7 +13,7 @@ import {
     SupervisorAccount, Badge, AccountCircle, ExitToApp,
     Person as PersonIcon, Add as AddIcon, School, Notifications,
     AccountBalanceWallet, Paid, Mail, FilterList, Search,
-    Edit, Block, RestoreFromTrash, Menu as MenuIcon
+    Edit, Block, RestoreFromTrash, Menu as MenuIcon, DirectionsBus
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -367,6 +367,10 @@ const CollegeDashboard = () => {
             if (formData.role === 'teacher') {
                 payload.department = teacherData.department;
                 payload.subject = teacherData.subject;
+            }
+            if (formData.role === 'driver') {
+                const nextBusRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/next-bus-number`);
+                payload.busNumber = nextBusRes.data.nextBusNumber;
             }
             await axios.post(`${import.meta.env.VITE_API_URL}/api/users`, payload);
             
@@ -1157,6 +1161,7 @@ const CollegeDashboard = () => {
                 { title: 'Total Students', count: users.filter(u => u.role === 'student').length, icon: <School />, color: '#4dabf5' },
                 { title: 'Total Teachers', count: users.filter(u => u.role === 'teacher').length, icon: <SupervisorAccount />, color: '#ff9800' },
                 { title: 'Total Staff', count: users.filter(u => u.role === 'staff').length, icon: <Badge />, color: '#4caf50' },
+                { title: 'Total Drivers', count: users.filter(u => u.role === 'driver').length, icon: <DirectionsBus />, color: '#7c4dff' },
                 { title: 'Total Parents', count: users.filter(u => u.role === 'parent').length, icon: <PersonIcon />, color: '#ff5252' },
             ].map((stat, idx) => (
                 <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
@@ -1191,6 +1196,7 @@ const CollegeDashboard = () => {
                                     <MenuItem value="parent">Parents</MenuItem>
                                     <MenuItem value="teacher">Teachers</MenuItem>
                                     <MenuItem value="staff">Staff</MenuItem>
+                                    <MenuItem value="driver">Drivers</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -1349,6 +1355,7 @@ const CollegeDashboard = () => {
                                     <MenuItem value="student">Student</MenuItem>
                                     <MenuItem value="teacher">Teacher</MenuItem>
                                     <MenuItem value="staff">Staff</MenuItem>
+                                    <MenuItem value="driver">Driver</MenuItem>
                                     <MenuItem value="parent">Parent</MenuItem>
                                 </Select>
                             </FormControl>
@@ -1611,6 +1618,9 @@ const CollegeDashboard = () => {
                                     <TableCell sx={{ fontWeight: 'bold', color: dark.textSecondary }}>{role === 'student' ? 'Department' : 'Subject'}</TableCell>
                                 </>
                             )}
+                            {role === 'driver' && (
+                                <TableCell sx={{ fontWeight: 'bold', color: dark.textSecondary }}>Bus Number</TableCell>
+                            )}
                             <TableCell sx={{ fontWeight: 'bold', color: dark.textSecondary }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
@@ -1638,6 +1648,9 @@ const CollegeDashboard = () => {
                                                 {role === 'student' ? enrollment?.batch : u.subject || '—'}
                                             </TableCell>
                                         </>
+                                    )}
+                                    {role === 'driver' && (
+                                        <TableCell sx={{ color: dark.accent, fontWeight: 700 }}>{u.busNumber || '—'}</TableCell>
                                     )}
                                     <TableCell>
                                         <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -1857,6 +1870,7 @@ const CollegeDashboard = () => {
                         { text: 'Teacher Records', icon: <SupervisorAccount />, val: 'teacher-records' },
                         { text: 'Parent Records', icon: <PersonIcon />, val: 'parent-records' },
                         { text: 'Staff Records', icon: <Badge />, val: 'staff-records' },
+                        { text: 'Driver Records', icon: <DirectionsBus />, val: 'driver-records' },
                         { text: 'Upload Attendance', icon: <CalendarToday />, val: 'upload-attendance' },
                         { text: 'Manage Gallery', icon: <Collections />, val: 'manage-gallery' },
                         { text: 'Payroll Management', icon: <AccountBalanceWallet />, val: 'payroll' },
@@ -1944,6 +1958,7 @@ const CollegeDashboard = () => {
                             view === 'teacher-records' ? renderUserRecords('teacher', 'Teacher Records') :
                             view === 'parent-records' ? renderUserRecords('parent', 'Parent Records') :
                             view === 'staff-records' ? renderUserRecords('staff', 'Staff Records') :
+                            view === 'driver-records' ? renderUserRecords('driver', 'Driver Records') :
                                 view === 'upload-attendance' ? renderUploadAttendance() :
                                     view === 'manage-gallery' ? renderManageGallery() :
                                         view === 'payroll' ? renderPayrollManagement() :
