@@ -165,6 +165,22 @@ const CollegeDashboard = () => {
         setDriverData({ ...driverData, stops: newStops });
     };
 
+    const getCoordinates = async (address) => {
+        if (!address) return null;
+        try {
+            const response = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+            if (response.data && response.data.length > 0) {
+                return {
+                    lat: parseFloat(response.data[0].lat),
+                    lng: parseFloat(response.data[0].lon)
+                };
+            }
+        } catch (error) {
+            console.error("Geocoding error for:", address, error);
+        }
+        return null;
+    };
+
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
     };
@@ -397,6 +413,18 @@ const CollegeDashboard = () => {
                 payload.nextDestination = driverData.nextDestination;
                 payload.endPoint = driverData.endPoint;
                 payload.stops = driverData.stops;
+
+                // Geocode itinerary
+                payload.startingPointCoords = await getCoordinates(driverData.startingPoint);
+                payload.nextDestinationCoords = await getCoordinates(driverData.nextDestination);
+                payload.endPointCoords = await getCoordinates(driverData.endPoint);
+                
+                const stopCoords = [];
+                for (const stop of driverData.stops) {
+                    const coords = await getCoordinates(stop);
+                    if (coords) stopCoords.push({ ...coords, name: stop });
+                }
+                payload.stopCoords = stopCoords;
             }
             await axios.post(`${import.meta.env.VITE_API_URL}/api/users`, payload);
             

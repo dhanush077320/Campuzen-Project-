@@ -112,8 +112,51 @@ const DriverDashboard = () => {
                 className: 'dispatch-tooltip',
                 offset: [0, -20]
             }).openTooltip();
+
+            // Draw Route and Stops if available
+            if (user && user.startingPointCoords && user.endPointCoords) {
+                const routeCoords = [
+                    [user.startingPointCoords.lat, user.startingPointCoords.lng],
+                    ...(user.stopCoords || []).map(s => [s.lat, s.lng]),
+                    [user.endPointCoords.lat, user.endPointCoords.lng]
+                ];
+
+                // Draw black route line
+                L.polyline(routeCoords, {
+                    color: '#000000',
+                    weight: 4,
+                    opacity: 0.8,
+                    lineJoin: 'round'
+                }).addTo(mapInstanceRef.current);
+
+                // Add circular markers for stops
+                const allPoints = [
+                    { ...user.startingPointCoords, name: user.startingPoint || 'Start' },
+                    ...(user.stopCoords || []),
+                    { ...user.endPointCoords, name: user.endPoint || 'End' }
+                ];
+
+                allPoints.forEach((point, idx) => {
+                    const circle = L.circleMarker([point.lat, point.lng], {
+                        radius: 6,
+                        fillColor: '#ffffff',
+                        fillOpacity: 1,
+                        color: '#000000',
+                        weight: 2
+                    }).addTo(mapInstanceRef.current);
+
+                    circle.bindTooltip(point.name, {
+                        permanent: false,
+                        direction: 'top',
+                        className: 'stop-tooltip'
+                    });
+                });
+
+                // Fit map to route
+                mapInstanceRef.current.fitBounds(routeCoords, { padding: [50, 50] });
+            }
         }
-    }, [view]);
+    }, [view, user]);
 
 
     const watchIdRef = useRef(null);
@@ -503,6 +546,7 @@ const DriverDashboard = () => {
                 {`
                     .dispatch-tooltip { background: rgba(15, 23, 42, 0.98) !important; border: 1px solid rgba(255,255,255,0.15) !important; color: white !important; font-weight: 900 !important; font-size: 11px !important; letter-spacing: 1.5px !important; padding: 4px 12px !important; border-radius: 6px !important; box-shadow: 0 10px 15px rgba(0,0,0,0.4) !important; }
                     .dispatch-tooltip::before { border-top-color: rgba(15, 23, 42, 0.98) !important; }
+                    .stop-tooltip { background: #000000 !important; border: 1px solid white !important; color: white !important; font-weight: 800 !important; font-size: 10px !important; border-radius: 4px !important; padding: 2px 8px !important; }
                 `}
             </style>
         </Box>

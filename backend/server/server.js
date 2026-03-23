@@ -82,7 +82,12 @@ app.post('/login/:role', async (req, res) => {
 
 // Create User
 app.post('/api/users', async (req, res) => {
-    const { fullName, username, password, email, phoneNumber, role, photo, department, subject, busNumber } = req.body;
+    const { 
+        fullName, username, password, email, phoneNumber, role, photo, 
+        department, subject, busNumber, startingPoint, nextDestination, 
+        endPoint, stops, startingPointCoords, nextDestinationCoords, 
+        endPointCoords, stopCoords 
+    } = req.body;
 
     try {
         const existingUser = await User.findOne({ username, role });
@@ -100,7 +105,15 @@ app.post('/api/users', async (req, res) => {
             photo,
             department,
             subject,
-            busNumber
+            busNumber,
+            startingPoint,
+            nextDestination,
+            endPoint,
+            stops,
+            startingPointCoords,
+            nextDestinationCoords,
+            endPointCoords,
+            stopCoords
         });
 
         await newUser.save();
@@ -224,7 +237,15 @@ app.get('/api/users/bus-location/:busNumber', async (req, res) => {
             latitude: driver.latitude, 
             longitude: driver.longitude,
             driverName: driver.fullName,
-            lastUpdated: driver.updatedAt
+            lastUpdated: driver.updatedAt,
+            startingPoint: driver.startingPoint,
+            nextDestination: driver.nextDestination,
+            endPoint: driver.endPoint,
+            stops: driver.stops,
+            startingPointCoords: driver.startingPointCoords,
+            nextDestinationCoords: driver.nextDestinationCoords,
+            endPointCoords: driver.endPointCoords,
+            stopCoords: driver.stopCoords
         });
     } catch (error) {
         res.status(500).json({ message: "Error fetching bus location" });

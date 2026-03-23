@@ -289,6 +289,44 @@ const TeacherDashboard = () => {
 
                 trackingMarkerRef.current = L.marker([trackedBus.latitude, trackedBus.longitude], { icon: busIcon }).addTo(map);
                 trackingMapRef.current = map;
+
+                // Draw Route and Stops if available
+                if (trackedBus.startingPointCoords && trackedBus.endPointCoords) {
+                    const routeCoords = [
+                        [trackedBus.startingPointCoords.lat, trackedBus.startingPointCoords.lng],
+                        ...(trackedBus.stopCoords || []).map(s => [s.lat, s.lng]),
+                        [trackedBus.endPointCoords.lat, trackedBus.endPointCoords.lng]
+                    ];
+
+                    L.polyline(routeCoords, {
+                        color: '#000000',
+                        weight: 4,
+                        opacity: 0.8,
+                        lineJoin: 'round'
+                    }).addTo(map);
+
+                    const allPoints = [
+                        { ...trackedBus.startingPointCoords, name: trackedBus.startingPoint || 'Start' },
+                        ...(trackedBus.stopCoords || []),
+                        { ...trackedBus.endPointCoords, name: trackedBus.endPoint || 'End' }
+                    ];
+
+                    allPoints.forEach((point) => {
+                        const circle = L.circleMarker([point.lat, point.lng], {
+                            radius: 6,
+                            fillColor: '#ffffff',
+                            fillOpacity: 1,
+                            color: '#000000',
+                            weight: 2
+                        }).addTo(map);
+
+                        circle.bindTooltip(point.name, {
+                            permanent: false,
+                            direction: 'top',
+                            className: 'stop-tooltip'
+                        });
+                    });
+                }
             }, 100);
         }
     }, [trackedBus]);
@@ -1006,6 +1044,11 @@ const TeacherDashboard = () => {
                                         view === 'tracking' ? renderBusTracking() :
                                             renderFeedback()}
                 </Container>
+                <style>
+                    {`
+                        .stop-tooltip { background: #000000 !important; border: 1px solid white !important; color: white !important; font-weight: 800 !important; font-size: 10px !important; border-radius: 4px !important; padding: 2px 8px !important; }
+                    `}
+                </style>
             </Box>
         </Box>
     );
