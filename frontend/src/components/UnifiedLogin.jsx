@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box, TextField, Paper, Button, MenuItem, Select, InputLabel,
     FormControl, Typography, AppBar, Toolbar, Container, Grid,
@@ -18,21 +18,32 @@ const UnifiedLogin = () => {
     const [id, setId] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [slowMessage, setSlowMessage] = useState(false);
     const navigate = useNavigate();
+
+    // Pre-warm the Render server as soon as the login page loads
+    useEffect(() => {
+        fetch(`${import.meta.env.VITE_API_URL}/`).catch(() => {});
+    }, []);
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setSlowMessage(false);
+        const timer = setTimeout(() => setSlowMessage(true), 5000);
         try {
             const response = await axios.post(`${import.meta.env.VITE_API_URL}/login/${role}`, { id, password });
             if (response.status === 200) {
+                clearTimeout(timer);
                 localStorage.setItem('user', JSON.stringify(response.data.user));
                 navigate(`/${role}-dashboard`);
             }
         } catch (error) {
             alert(error.response?.data?.message || "Invalid Credentials");
         } finally {
+            clearTimeout(timer);
             setLoading(false);
+            setSlowMessage(false);
         }
     };
 
@@ -191,7 +202,16 @@ const UnifiedLogin = () => {
                                             transition: 'all 0.3s ease'
                                         }}
                                     >
-                                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Enter Portal'}
+                                        {loading ? (
+                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                                                <CircularProgress size={24} color="inherit" />
+                                                {slowMessage && (
+                                                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.7rem' }}>
+                                                        ⏳ Server warming up, please wait...
+                                                    </Typography>
+                                                )}
+                                            </Box>
+                                        ) : 'Enter Portal'}
                                     </Button>
                                 </Box>
                             </Paper>
