@@ -238,8 +238,13 @@ app.post('/api/users/update-location', async (req, res) => {
 // Get Bus Location
 app.get('/api/users/bus-location/:busNumber', async (req, res) => {
     try {
+        const busNum = parseInt(req.params.busNumber.replace(/\D/g, ''));
+        if (isNaN(busNum)) {
+            return res.status(400).json({ message: "Invalid bus number format" });
+        }
+
         const driver = await User.findOne({ 
-            busNumber: parseInt(req.params.busNumber), 
+            busNumber: busNum, 
             role: 'driver',
             isOnline: true 
         });

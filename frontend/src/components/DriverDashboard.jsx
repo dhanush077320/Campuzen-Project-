@@ -112,10 +112,15 @@ const DriverDashboard = () => {
                 className: 'dispatch-tooltip',
                 offset: [0, -20]
             }).openTooltip();
+        }
 
-            // Draw Route and Stops if available
-            if (user && user.startingPointCoords && user.endPointCoords) {
-                const routeCoords = [
+        // Draw Route and Stops if available - Moved outside marker check
+        if (view === 'map' && mapInstanceRef.current && user && user.startingPointCoords && user.endPointCoords) {
+            // Clear existing layers if needed (optional, for safety)
+            // L.polyline... 
+            // etc
+            
+            const routeCoords = [
                     [user.startingPointCoords.lat, user.startingPointCoords.lng],
                     ...(user.stopCoords || []).map(s => [s.lat, s.lng]),
                     [user.endPointCoords.lat, user.endPointCoords.lng]
