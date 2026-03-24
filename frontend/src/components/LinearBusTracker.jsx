@@ -75,6 +75,33 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
         return { index: bestIdx, distance: minStopDist };
     }, [currentLocation, allStops]);
 
+    // Stationary Check (10m in 2 minutes)
+    const [isStationaryAtStart, setIsStationaryAtStart] = React.useState(false);
+    const lastPosRef = React.useRef(currentLocation);
+    const lastMoveTimeRef = React.useRef(Date.now());
+
+    React.useEffect(() => {
+        if (!currentLocation || !currentLocation.lat) return;
+        
+        // Check distance moved from last recorded point
+        const distMoved = lastPosRef.current 
+            ? getDistanceFromLatLonInKm(lastPosRef.current.lat, lastPosRef.current.lng, currentLocation.lat, currentLocation.lng)
+            : 0;
+
+        if (!lastPosRef.current || distMoved > 0.01) { // 10 meters
+            lastPosRef.current = currentLocation;
+            lastMoveTimeRef.current = Date.now();
+            setIsStationaryAtStart(false);
+        } else {
+            const elapsedMins = (Date.now() - lastMoveTimeRef.current) / 60000;
+            // "System Ready" check: within 100m of start and stationary for 2 mins
+            const isNearStart = startStop?.lat && getDistanceFromLatLonInKm(currentLocation.lat, currentLocation.lng, startStop.lat, startStop.lng) < 0.1;
+            if (elapsedMins >= 2 && isNearStart) {
+                setIsStationaryAtStart(true);
+            }
+        }
+    }, [currentLocation, startStop]);
+
     // 1. The "Track Progress" Logic
     const busProgressPercentage = useMemo(() => {
         const loc = currentLocation;
@@ -93,31 +120,44 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
         return Math.max(0, Math.min(100, percentage));
     }, [currentLocation, totalStops, hasEnds, startStop, endStop]);
 
-    // 2. The "Geofence" Logic (Auto-Fill Stops)
-    // Marks circles as blue filled as the bus passes them or is within 100m
+    // 2. The "Geofence" Logic (Auto-Fill Stops & Index-Based Completion)
     const stopsStatus = useMemo(() => {
+        // Find nearest stop for Index-Based Completion
+        const nearestIdx = nearestStopInfo ? nearestStopInfo.index : -1;
+
         return allStops.map((stop, idx) => {
             const stopProgressPct = (idx / (totalStops - 1)) * 100;
             
-            // A stop is "Reached" if:
-            // 1. The bus has progressed past its position on the timeline
-            // 2. OR the bus is currently within 100 meters (Threshold)
+            // "Fill-Behind" Rule: Automatically mark all stops before Current Stop index as completed
             let isReached = false;
-            if (busProgressPercentage !== null && busProgressPercentage >= stopProgressPct) {
+            
+            if (idx <= nearestIdx && nearestIdx !== -1) {
+                isReached = true;
+            } else if (busProgressPercentage !== null && busProgressPercentage >= stopProgressPct) {
                 isReached = true;
             } else if (currentLocation?.lat != null && stop.lat != null) {
                 const dist = getDistanceFromLatLonInKm(currentLocation.lat, currentLocation.lng, stop.lat, stop.lng);
-                if (dist < 0.1) isReached = true; // 100 meters threshold
+                if (dist < 0.1) isReached = true; 
             }
             
             return { ...stop, isReached };
         });
-    }, [allStops, busProgressPercentage, currentLocation, totalStops]);
+    }, [allStops, busProgressPercentage, currentLocation, totalStops, nearestStopInfo]);
 
     // Active Target: The index of the next stop the bus is looking for
     const targetStopIndex = useMemo(() => {
         return stopsStatus.findIndex(s => !s.isReached);
     }, [stopsStatus]);
+
+    // "Out of Bounds" Logic: Check if the bus has already passed the student's stop
+    const hasPassedUserStop = useMemo(() => {
+        if (!boardingStopName || nearestStopInfo === null) return false;
+        const boardingIdx = allStops.findIndex(s => s.name?.trim().toLowerCase() === boardingStopName.trim().toLowerCase());
+        if (boardingIdx === -1) return false;
+        
+        // If the nearest stop index is greater than boarding index, bus has passed it
+        return nearestStopInfo.index > boardingIdx;
+    }, [boardingStopName, nearestStopInfo, allStops]);
 
     // All hooks done — safe to do early return now
     if (totalStops < 2) {
@@ -164,6 +204,22 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
                         <DirectionsBusIcon sx={{ fontSize: 16, mr: 1 }} />
                         <Typography sx={{ fontSize: '12px', fontWeight: 800 }}>
                             Nearest: {allStops[nearestStopInfo.index]?.name} ({Math.round(nearestStopInfo.distance * 1000)}m)
+                        </Typography>
+                    </Box>
+                )}
+
+                {isStationaryAtStart && (
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', bgcolor: '#fff9c4', color: '#fbc02d', px: 1.5, py: 0.5, borderRadius: '20px', width: 'fit-content', mt: 1, border: '1px solid #fbc02d' }}>
+                        <Typography sx={{ fontSize: '12px', fontWeight: 900 }}>
+                            System Ready: Bus at Starting Point
+                        </Typography>
+                    </Box>
+                )}
+
+                {hasPassedUserStop && (
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', bgcolor: '#ffebee', color: '#d32f2f', px: 1.5, py: 0.8, borderRadius: '12px', width: 'fit-content', mt: 1, border: '1px solid #d32f2f', boxShadow: '0 2px 4px rgba(211, 47, 47, 0.2)' }}>
+                        <Typography sx={{ fontSize: '12px', fontWeight: 900 }}>
+                            NOTICE: Bus has already passed your location
                         </Typography>
                     </Box>
                 )}
