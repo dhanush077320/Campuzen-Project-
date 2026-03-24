@@ -50,35 +50,73 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
         [allStops]
     );
     const hasAllCoords = stopsWithCoords.length === totalStops && totalStops >= 2;
+    const startStop = allStops[0];
+    const endStop = allStops[totalStops - 1];
+    const hasEnds = startStop?.lat != null && endStop?.lat != null;
 
-    // Calculate bus progress (0–100%) using Haversine if all coords available
+    // Detect which stop is currently "active" or nearest
+    const nearestStopInfo = useMemo(() => {
+        const loc = currentLocation;
+        if (!loc || !loc.lat || !loc.lng || totalStops < 1) return null;
+
+        let minStopDist = Infinity;
+        let bestIdx = -1;
+        
+        allStops.forEach((stop, idx) => {
+            if (stop.lat != null && stop.lng != null) {
+                const d = getDistanceFromLatLonInKm(loc.lat, loc.lng, stop.lat, stop.lng);
+                if (d < minStopDist) {
+                    minStopDist = d;
+                    bestIdx = idx;
+                }
+            }
+        });
+
+        return { index: bestIdx, distance: minStopDist };
+    }, [currentLocation, allStops]);
+
+    // Calculate bus progress (0–100%) using Haversine
     const busProgressPercentage = useMemo(() => {
         const loc = currentLocation;
         if (!loc || !loc.lat || !loc.lng || isNaN(loc.lat) || isNaN(loc.lng)) return null;
-        if (!hasAllCoords || totalStops < 2) return null;
+        if (totalStops < 2) return null;
 
         const busLat = loc.lat;
         const busLng = loc.lng;
 
-        let closestSegmentIndex = 0;
-        let minSum = Infinity;
-        let frac = 0;
+        // Mode 1: All stops have coords (Precise segment-based)
+        if (hasAllCoords) {
+            let closestSegmentIndex = 0;
+            let minSum = Infinity;
+            let frac = 0;
 
-        for (let i = 0; i < totalStops - 1; i++) {
-            const p1 = allStops[i];
-            const p2 = allStops[i + 1];
-            const d1 = getDistanceFromLatLonInKm(busLat, busLng, p1.lat, p1.lng);
-            const d2 = getDistanceFromLatLonInKm(busLat, busLng, p2.lat, p2.lng);
-            if (d1 + d2 < minSum) {
-                minSum = d1 + d2;
-                closestSegmentIndex = i;
-                frac = d1 === 0 ? 0 : d2 === 0 ? 1 : d1 / (d1 + d2);
+            for (let i = 0; i < totalStops - 1; i++) {
+                const p1 = allStops[i];
+                const p2 = allStops[i + 1];
+                const d1 = getDistanceFromLatLonInKm(busLat, busLng, p1.lat, p1.lng);
+                const d2 = getDistanceFromLatLonInKm(busLat, busLng, p2.lat, p2.lng);
+                if (d1 + d2 < minSum) {
+                    minSum = d1 + d2;
+                    closestSegmentIndex = i;
+                    frac = d1 === 0 ? 0 : d2 === 0 ? 1 : d1 / (d1 + d2);
+                }
             }
+            const progress = (closestSegmentIndex + frac) / (totalStops - 1);
+            return Math.max(0, Math.min(100, progress * 100));
         }
 
-        const progress = (closestSegmentIndex + frac) / (totalStops - 1);
-        return Math.max(0, Math.min(100, progress * 100));
-    }, [currentLocation, allStops, totalStops, hasAllCoords]);
+        // Mode 2: At least Start and End have coords (Linear interpolation fallback)
+        if (hasEnds) {
+            const dStart = getDistanceFromLatLonInKm(busLat, busLng, startStop.lat, startStop.lng);
+            const dEnd = getDistanceFromLatLonInKm(busLat, busLng, endStop.lat, endStop.lng);
+            const totalPath = dStart + dEnd;
+            if (totalPath === 0) return 0;
+            const progress = dStart / totalPath;
+            return Math.max(0, Math.min(100, progress * 100));
+        }
+
+        return null;
+    }, [currentLocation, allStops, totalStops, hasAllCoords, hasEnds]);
 
     // All hooks done — safe to do early return now
     if (totalStops < 2) {
@@ -112,20 +150,29 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
             borderRadius: '24px',
             // Let container grow naturally — parent must NOT have overflow:hidden
         }}>
-            {/* Live coordinates badge */}
-            {currentLocation?.lat && !isNaN(currentLocation.lat) && (
-                <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            {/* Live coordinates and status badge */}
+            <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#00d68f', boxShadow: '0 0 8px #00d68f' }} />
                     <Typography variant="caption" sx={{ color: '#555', fontWeight: 700 }}>
                         Bus GPS: {currentLocation.lat.toFixed(5)}, {currentLocation.lng.toFixed(5)}
                     </Typography>
-                    {!hasAllCoords && (
+                    {!hasAllCoords && !hasEnds && (
                         <Typography variant="caption" sx={{ color: '#f59e0b', fontWeight: 600 }}>
-                            (Loading route coords...)
+                            (Locating route...)
                         </Typography>
                     )}
                 </Box>
-            )}
+                
+                {nearestStopInfo && nearestStopInfo.distance < 0.3 && (
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', bgcolor: '#e3f2fd', color: '#1976d2', px: 1.5, py: 0.5, borderRadius: '20px', width: 'fit-content', mt: 1 }}>
+                        <DirectionsBusIcon sx={{ fontSize: 16, mr: 1 }} />
+                        <Typography sx={{ fontSize: '12px', fontWeight: 800 }}>
+                            Bus at: {allStops[nearestStopInfo.index]?.name}
+                        </Typography>
+                    </Box>
+                )}
+            </Box>
 
             {/* Timeline */}
             <Box sx={{ position: 'relative', ml: 2, height: `${timelineHeight}px` }}>
@@ -188,6 +235,8 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
                     const isFirst = i === 0;
                     const isLast = i === totalStops - 1;
 
+                    const isNearest = nearestStopInfo && nearestStopInfo.index === i && nearestStopInfo.distance < 0.3;
+
                     return (
                         <Box
                             key={i}
@@ -204,13 +253,15 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
                         >
                             {/* Stop circle */}
                             <Box sx={{
-                                width: 24,
-                                height: 24,
+                                width: isNearest ? 28 : 24,
+                                height: isNearest ? 28 : 24,
                                 borderRadius: '50%',
-                                border: `3px solid ${timelineColor}`,
+                                border: `3px solid ${isNearest ? busColor : timelineColor}`,
                                 bgcolor: isBoardingStop ? boardingBg : stopBg,
+                                boxShadow: isNearest ? `0 0 12px ${busColor}88` : 'none',
                                 zIndex: 3,
-                                flexShrink: 0
+                                flexShrink: 0,
+                                transition: 'all 0.3s ease'
                             }} />
 
                             {/* Label */}
