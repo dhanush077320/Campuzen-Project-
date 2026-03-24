@@ -446,7 +446,20 @@ const StaffDashboard = () => {
             </Paper>
 
             {trackedBus && (
-                <Paper elevation={0} sx={{ p: 4, borderRadius: '32px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: '0 20px 40px rgba(0,0,0,0.4)', overflowY: 'auto' }}>
+                <Paper elevation={0} sx={{ 
+                    p: 4, 
+                    borderRadius: '32px', 
+                    bgcolor: dark.surface, 
+                    border: `1px solid ${dark.border}`, 
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.4)', 
+                    maxHeight: '80vh',
+                    overflowY: 'auto',
+                    mb: 8,
+                    // Custom Scrollbar
+                    '&::-webkit-scrollbar': { width: '6px' },
+                    '&::-webkit-scrollbar-track': { background: 'transparent' },
+                    '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.1)', borderRadius: '10px' }
+                }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
                         <Box>
                             <Typography sx={{ color: dark.accent, fontWeight: 900, mb: 1, letterSpacing: '1px' }}>BUS UNIT #{busNumberInput}</Typography>

@@ -497,7 +497,20 @@ const DriverDashboard = () => {
                             Live Itinerary Tracker 
                         </Typography>
                         
-                        <Paper elevation={24} sx={{ p: 4, borderRadius: '32px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: '0 20px 40px rgba(0,0,0,0.4)', mb: 4 }}>
+                        <Paper elevation={24} sx={{ 
+                            p: 4, 
+                            borderRadius: '32px', 
+                            bgcolor: dark.surface, 
+                            border: `1px solid ${dark.border}`, 
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.4)', 
+                            mb: 4,
+                            maxHeight: '75vh',
+                            overflowY: 'auto',
+                            // Custom Scrollbar
+                            '&::-webkit-scrollbar': { width: '6px' },
+                            '&::-webkit-scrollbar-track': { background: 'transparent' },
+                            '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.1)', borderRadius: '10px' }
+                        }}>
                             {/* Instead of the map, show the LinearBusTracker centered */}
                             <Box sx={{ maxWidth: 800, mx: 'auto' }}>
                                 <LinearBusTracker 
@@ -507,14 +520,36 @@ const DriverDashboard = () => {
                                 />
                             </Box>
                         </Paper>
+                        <Box sx={{ height: 200 }} /> {/* Extra spacer for the floating bottom bar */}
                     </Container>
                 </Box>
             )}
 
-            {/* Floating Info Cards - Only in 'map' view but floating on the side */}
+            {/* Floating Info Cards - Scrollable sidebar to show all destinations */}
             {isDutyOn && user && view === 'map' && (
-                <Box sx={{ position: 'absolute', top: 100, right: 30, zIndex: 10, width: 300 }}>
-                    <Paper elevation={24} sx={{ p: 3, borderRadius: '24px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, backdropFilter: 'blur(15px)' }}>
+                <Box sx={{ 
+                    position: 'absolute', 
+                    top: 100, 
+                    right: 30, 
+                    bottom: 150, // Space for bottom status bar
+                    zIndex: 10, 
+                    width: 320,
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    <Paper elevation={24} sx={{ 
+                        p: 3, 
+                        borderRadius: '24px', 
+                        bgcolor: 'rgba(15, 23, 42, 0.95)', 
+                        border: `1px solid ${dark.border}`, 
+                        backdropFilter: 'blur(15px)',
+                        flex: 1,
+                        overflowY: 'auto',
+                        // Custom scrollbar
+                        '&::-webkit-scrollbar': { width: '4px' },
+                        '&::-webkit-scrollbar-track': { background: 'transparent' },
+                        '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.1)', borderRadius: '4px' }
+                    }}>
                         <Typography variant="overline" sx={{ color: dark.accent, fontWeight: 900, letterSpacing: '2px' }}>LIVE ITINERARY</Typography>
                         <Divider sx={{ my: 1.5, borderColor: dark.border }} />
                         
@@ -536,16 +571,16 @@ const DriverDashboard = () => {
                         {user.stops && user.stops.length > 0 && (
                             <Box sx={{ mb: 2 }}>
                                 <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 800, display: 'block' }}>PLANNED STOPS</Typography>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
                                     {user.stops.map((stop, i) => {
                                         const stopCoords = routeDetails?.stops?.find(s => s.name === stop);
                                         return (
-                                            <Box key={i}>
+                                            <Box key={i} sx={{ borderLeft: `2px solid ${dark.border}`, pl: 2, py: 0.5 }}>
                                                 <Typography variant="body2" sx={{ fontWeight: 800, color: dark.textSecondary, display: 'flex', alignItems: 'center' }}>
-                                                    <Circle sx={{ fontSize: 6, mr: 1, color: dark.accent }} /> {stop}
+                                                    {stop}
                                                 </Typography>
                                                 {stopCoords && (
-                                                    <Typography variant="caption" sx={{ ml: 2, color: dark.textSecondary, fontSize: '0.65rem', fontStyle: 'italic', display: 'block' }}>
+                                                    <Typography variant="caption" sx={{ color: dark.textSecondary, fontSize: '0.65rem', fontStyle: 'italic', display: 'block', opacity: 0.6 }}>
                                                         {stopCoords.lat.toFixed(4)}, {stopCoords.lng.toFixed(4)}
                                                     </Typography>
                                                 )}
