@@ -270,7 +270,7 @@ const ParentDashboard = () => {
                             weight: 3
                         }).addTo(map);
 
-                        circle.bindTooltip(`<div style="color: white; font-weight: 900; font-size: 13px; text-shadow: 0 2px 4px black, 0 0 2px black;">${point.name.toUpperCase()}</div>`, {
+                        circle.bindTooltip(`<div style="color: #333; font-weight: 800; font-size: 13px; text-shadow: 0 0 2px white;">${point.name}</div>`, {
                             permanent: true,
                             direction: 'right',
                             className: 'stop-label-tooltip',
@@ -1050,7 +1050,7 @@ const ParentDashboard = () => {
                 <style>
                     {`
                         .stop-tooltip { background: #000000 !important; border: 1px solid white !important; color: white !important; font-weight: 800 !important; font-size: 10px !important; border-radius: 4px !important; padding: 2px 8px !important; }
-                        .stop-label-tooltip { background: transparent !important; border: none !important; box-shadow: none !important; color: white !important; font-weight: 900 !important; font-size: 13px !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 2px 4px rgba(0,0,0,0.9) !important; letter-spacing: 0.5px !important; white-space: nowrap !important; }
+                        .stop-label-tooltip { background: transparent !important; border: none !important; box-shadow: none !important; color: #333 !important; font-weight: 800 !important; font-size: 13px !important; text-shadow: 0 0 3px white, 0 0 3px white, 0 0 5px white !important; letter-spacing: 0.5px !important; white-space: nowrap !important; }
                         .stop-label-tooltip::before { display: none !important; }
                     `}
                 </style>
