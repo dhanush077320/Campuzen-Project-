@@ -146,7 +146,7 @@ const DriverDashboard = () => {
                     weight: 3
                 }).addTo(mapInstanceRef.current);
 
-                circle.bindTooltip(`<div style="color: #333; font-weight: 800; font-size: 11px;">${point.name}</div>`, {
+                circle.bindTooltip(`<div style="color: white; font-weight: 900; font-size: 12px; text-shadow: 1px 1px 2px black;">${point.name}</div>`, {
                     permanent: true,
                     direction: 'right',
                     className: 'stop-label-tooltip',
