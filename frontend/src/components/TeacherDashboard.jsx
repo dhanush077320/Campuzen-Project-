@@ -320,7 +320,7 @@ const TeacherDashboard = () => {
                             weight: 3
                         }).addTo(map);
 
-                        circle.bindTooltip(`<div style="color: #333; font-weight: 800; font-size: 11px;">${point.name}</div>`, {
+                        circle.bindTooltip(`<div style="color: white; font-weight: 900; font-size: 12px; text-shadow: 1px 1px 2px black;">${point.name}</div>`, {
                             permanent: true,
                             direction: 'right',
                             className: 'stop-label-tooltip',
@@ -1048,7 +1048,7 @@ const TeacherDashboard = () => {
                 <style>
                     {`
                         .stop-tooltip { background: #000000 !important; border: 1px solid white !important; color: white !important; font-weight: 800 !important; font-size: 10px !important; border-radius: 4px !important; padding: 2px 8px !important; }
-                        .stop-label-tooltip { background: transparent !important; border: none !important; box-shadow: none !important; color: #333 !important; font-weight: 800 !important; text-shadow: 0 0 3px white, 0 0 3px white !important; }
+                        .stop-label-tooltip { background: transparent !important; border: none !important; box-shadow: none !important; color: white !important; font-weight: 900 !important; font-size: 12px !important; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 5px rgba(0,0,0,0.8) !important; letter-spacing: 0.5px !important; }
                         .stop-label-tooltip::before { display: none !important; }
                     `}
                 </style>

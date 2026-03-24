@@ -548,7 +548,7 @@ const DriverDashboard = () => {
                     .dispatch-tooltip { background: rgba(15, 23, 42, 0.98) !important; border: 1px solid rgba(255,255,255,0.15) !important; color: white !important; font-weight: 900 !important; font-size: 11px !important; letter-spacing: 1.5px !important; padding: 4px 12px !important; border-radius: 6px !important; box-shadow: 0 10px 15px rgba(0,0,0,0.4) !important; }
                     .dispatch-tooltip::before { border-top-color: rgba(15, 23, 42, 0.98) !important; }
                     .stop-tooltip { background: #000000 !important; border: 1px solid white !important; color: white !important; font-weight: 800 !important; font-size: 10px !important; border-radius: 4px !important; padding: 2px 8px !important; }
-                    .stop-label-tooltip { background: transparent !important; border: none !important; box-shadow: none !important; color: #333 !important; font-weight: 800 !important; text-shadow: 0 0 3px white, 0 0 3px white !important; }
+                    .stop-label-tooltip { background: transparent !important; border: none !important; box-shadow: none !important; color: white !important; font-weight: 900 !important; font-size: 12px !important; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 5px rgba(0,0,0,0.8) !important; letter-spacing: 0.5px !important; }
                     .stop-label-tooltip::before { display: none !important; }
                 `}
             </style>
