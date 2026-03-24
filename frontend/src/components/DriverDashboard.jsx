@@ -491,15 +491,38 @@ const DriverDashboard = () => {
             </AppBar>
 
             {view === 'map' && (
-                <Box sx={{ position: 'absolute', top: 100, left: 0, right: 0, bottom: 0, overflowY: 'auto', p: 3, display: 'flex', justifyContent: 'center' }}>
-                    <Container maxWidth="lg" sx={{ position: 'relative' }}>
-                        <Typography variant="h4" sx={{ fontWeight: 900, mb: 4, color: '#fff', textTransform: 'uppercase' }}>
+                <Box sx={{ 
+                    position: { xs: 'relative', md: 'absolute' }, 
+                    top: { xs: 80, md: 100 }, 
+                    left: 0, 
+                    right: 0, 
+                    bottom: 0, 
+                    overflowY: 'auto', 
+                    p: { xs: 2, md: 3 }, 
+                    display: 'flex', 
+                    flexDirection: { xs: 'column', lg: 'row' },
+                    alignItems: { xs: 'center', lg: 'flex-start' },
+                    justifyContent: 'center',
+                    gap: 4
+                }}>
+                    <Container maxWidth="lg" sx={{ 
+                        position: 'relative', 
+                        mx: { xs: 0, lg: 'auto' },
+                        mt: { xs: 2, md: 0 }
+                    }}>
+                        <Typography variant="h4" sx={{ 
+                            fontWeight: 900, 
+                            mb: 4, 
+                            color: '#fff', 
+                            textTransform: 'uppercase',
+                            fontSize: { xs: '1.5rem', md: '2.125rem' } 
+                        }}>
                             Live Itinerary Tracker 
                         </Typography>
                         
                         <Box sx={{ 
                             mb: 4,
-                            maxHeight: '75vh',
+                            maxHeight: { xs: 'none', md: '75vh' },
                             overflowY: 'auto',
                             // Custom Scrollbar
                             '&::-webkit-scrollbar': { width: '6px' },
@@ -514,21 +537,49 @@ const DriverDashboard = () => {
                                 />
                             </Box>
                         </Box>
-                        <Box sx={{ height: 200 }} /> {/* Extra spacer for the floating bottom bar */}
+
+                        {/* Mobile view info card (Moved inside the flow for mobile) */}
+                        <Box sx={{ display: { xs: 'block', md: 'none' }, mb: 4 }}>
+                            {/* Render the sidebar content here for mobile */}
+                            <Paper elevation={24} sx={{ 
+                                p: 3, 
+                                borderRadius: '24px', 
+                                bgcolor: 'rgba(15, 23, 42, 0.95)', 
+                                border: `1px solid ${dark.border}`, 
+                                backdropFilter: 'blur(15px)'
+                            }}>
+                                <Typography variant="overline" sx={{ color: dark.accent, fontWeight: 900, letterSpacing: '2px' }}>LIVE ITINERARY</Typography>
+                                <Divider sx={{ my: 1.5, borderColor: dark.border }} />
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="caption" sx={{ color: dark.accent, fontWeight: 800, display: 'block' }}>STARTING POINT</Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.startingPoint || 'NOT SET'}</Typography>
+                                </Box>
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="caption" sx={{ color: '#ff9800', fontWeight: 800, display: 'block' }}>NEXT DESTINATION</Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.nextDestination || 'NOT SET'}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" sx={{ color: dark.success, fontWeight: 800, display: 'block' }}>END POINT</Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.endPoint || 'NOT SET'}</Typography>
+                                </Box>
+                            </Paper>
+                        </Box>
+                        
+                        <Box sx={{ height: { xs: 100, md: 200 } }} /> 
                     </Container>
                 </Box>
             )}
 
-            {/* Floating Info Cards - Scrollable sidebar to show all destinations */}
+            {/* Desktop Floating Sidebar - Hidden on search/mobile */}
             {isDutyOn && user && view === 'map' && (
                 <Box sx={{ 
                     position: 'absolute', 
                     top: 100, 
                     right: 30, 
-                    bottom: 150, // Space for bottom status bar
+                    bottom: 150, 
                     zIndex: 10, 
                     width: 320,
-                    display: 'flex',
+                    display: { xs: 'none', md: 'flex' },
                     flexDirection: 'column'
                 }}>
                     <Paper elevation={24} sx={{ 
@@ -539,7 +590,6 @@ const DriverDashboard = () => {
                         backdropFilter: 'blur(15px)',
                         flex: 1,
                         overflowY: 'auto',
-                        // Custom scrollbar
                         '&::-webkit-scrollbar': { width: '4px' },
                         '&::-webkit-scrollbar-track': { background: 'transparent' },
                         '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.1)', borderRadius: '4px' }

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
 import DirectionsBusIcon from '@mui/icons-material/DirectionsBus';
 
 const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
@@ -215,6 +215,9 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
         return nearestStopInfo.index > boardingIdx;
     }, [boardingStopName, nearestStopInfo, allStops]);
 
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
     // All hooks done — safe to do early return now
     if (totalStops < 2) {
         return (
@@ -226,7 +229,7 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
         );
     }
 
-    const STOP_SPACING = 100; // Increased spacing for better clarity
+    const STOP_SPACING = isMobile ? 80 : 100; 
     const timelineHeight = (totalStops - 1) * STOP_SPACING;
 
     // Colors
