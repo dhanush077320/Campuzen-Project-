@@ -195,6 +195,8 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
             px: { xs: 2, sm: 6 },
             bgcolor: '#ffffff',
             borderRadius: '24px',
+            boxShadow: '0 15px 50px rgba(0,0,0,0.15)',
+            border: '1px solid rgba(0,0,0,0.08)',
         }}>
             {/* Live coordinates and status badge */}
             <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
