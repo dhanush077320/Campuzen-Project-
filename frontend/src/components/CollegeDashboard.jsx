@@ -373,7 +373,27 @@ const CollegeDashboard = () => {
 
     const handleSaveEdit = async () => {
         try {
-            await axios.patch(`${import.meta.env.VITE_API_URL}/api/users/${editingUser._id}`, editingUser);
+            const payload = { ...editingUser };
+            
+            if (editingUser.role === 'driver') {
+                // Geocode itinerary if it's a driver
+                payload.startingPointCoords = await getCoordinates(editingUser.startingPoint);
+                payload.nextDestinationCoords = await getCoordinates(editingUser.nextDestination);
+                payload.endPointCoords = await getCoordinates(editingUser.endPoint);
+                
+                const stopCoords = [];
+                if (editingUser.stops && Array.isArray(editingUser.stops)) {
+                    for (const stop of editingUser.stops) {
+                        if (stop && stop.trim()) {
+                            const coords = await getCoordinates(stop);
+                            if (coords) stopCoords.push({ ...coords, name: stop });
+                        }
+                    }
+                }
+                payload.stopCoords = stopCoords;
+            }
+
+            await axios.patch(`${import.meta.env.VITE_API_URL}/api/users/${editingUser._id}`, payload);
             alert("User updated successfully");
             handleCloseEdit();
             fetchUsers();
@@ -1977,6 +1997,69 @@ const CollegeDashboard = () => {
                                 label="Subjects (comma separated)"
                                 value={editingUser?.subject || ''}
                                 onChange={(e) => setEditingUser({ ...editingUser, subject: e.target.value })}
+                                sx={textFieldDarkSx}
+                            />
+                        </>
+                    )}
+                    {editingUser?.role === 'driver' && (
+                        <>
+                            <Divider sx={{ borderColor: dark.border, my: 1 }} />
+                            <Typography sx={{ color: dark.text, fontWeight: 700 }}>Itinerary Details</Typography>
+                            <TextField
+                                fullWidth
+                                label="Starting Point"
+                                value={editingUser?.startingPoint || ''}
+                                onChange={(e) => setEditingUser({ ...editingUser, startingPoint: e.target.value })}
+                                sx={textFieldDarkSx}
+                            />
+                            <TextField
+                                fullWidth
+                                label="Next Destination"
+                                value={editingUser?.nextDestination || ''}
+                                onChange={(e) => setEditingUser({ ...editingUser, nextDestination: e.target.value })}
+                                sx={textFieldDarkSx}
+                            />
+                            <Box>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                    <Typography variant="caption" sx={{ color: dark.textSecondary }}>Stops</Typography>
+                                    <Button size="small" startIcon={<AddIcon />} onClick={() => setEditingUser({...editingUser, stops: [...(editingUser.stops || []), '']})}>
+                                        Add Stop
+                                    </Button>
+                                </Box>
+                                <Grid container spacing={2}>
+                                    {(editingUser.stops || []).map((stop, idx) => (
+                                        <Grid item xs={12} key={idx}>
+                                            <TextField
+                                                fullWidth
+                                                size="small"
+                                                label={`Stop ${idx + 1}`}
+                                                value={stop}
+                                                onChange={(e) => {
+                                                    const newStops = [...editingUser.stops];
+                                                    newStops[idx] = e.target.value;
+                                                    setEditingUser({ ...editingUser, stops: newStops });
+                                                }}
+                                                sx={textFieldDarkSx}
+                                                InputProps={{
+                                                    endAdornment: (
+                                                        <IconButton size="small" onClick={() => {
+                                                            const newStops = editingUser.stops.filter((_, i) => i !== idx);
+                                                            setEditingUser({ ...editingUser, stops: newStops });
+                                                        }} sx={{ color: dark.danger }}>
+                                                            <Delete fontSize="small" />
+                                                        </IconButton>
+                                                    )
+                                                }}
+                                            />
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            </Box>
+                            <TextField
+                                fullWidth
+                                label="End Point"
+                                value={editingUser?.endPoint || ''}
+                                onChange={(e) => setEditingUser({ ...editingUser, endPoint: e.target.value })}
                                 sx={textFieldDarkSx}
                             />
                         </>

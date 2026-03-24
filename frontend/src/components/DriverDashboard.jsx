@@ -34,11 +34,40 @@ const DriverDashboard = () => {
     const [user, setUser] = useState(null);
     const [isDutyOn, setIsDutyOn] = useState(false);
     const [status, setStatus] = useState('Standby');
+    const [routeDetails, setRouteDetails] = useState(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [feedbackData, setFeedbackData] = useState({ message: '' });
     const navigate = useNavigate();
+
+    const geocodeAddress = async (address) => {
+        if (!address) return null;
+        try {
+            const res = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`, {
+                headers: { 'Accept-Language': 'en' }
+            });
+            if (res.data && res.data.length > 0) {
+                return { lat: parseFloat(res.data[0].lat), lng: parseFloat(res.data[0].lon), name: address };
+            }
+        } catch (e) { console.error('Geocode error:', e); }
+        return null;
+    };
+
+    const fetchRouteGeometry = async (points) => {
+        if (!points || points.length < 2) return points;
+        try {
+            const coordsString = points.map(p => `${p[1]},${p[0]}`).join(';');
+            const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
+            const response = await axios.get(url);
+            if (response.data.routes && response.data.routes[0]) {
+                return response.data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+            }
+        } catch (error) {
+            console.error("Routing error:", error);
+        }
+        return points; // Fallback to straight lines
+    };
     
     const [galleryItems, setGalleryItems] = useState([]);
-    const [feedbackData, setFeedbackData] = useState({ category: 'Transport', message: '' });
 
     const mapContainerRef = useRef(null);
     const mapInstanceRef = useRef(null);
@@ -114,50 +143,107 @@ const DriverDashboard = () => {
             }).openTooltip();
         }
 
-        // Draw Route and Stops if available
-        if (view === 'map' && mapInstanceRef.current && user && user.startingPointCoords && user.endPointCoords) {
-            const routeCoords = [
-                [user.startingPointCoords.lat, user.startingPointCoords.lng],
-                ...(user.stopCoords || []).map(s => [s.lat, s.lng]),
-                [user.endPointCoords.lat, user.endPointCoords.lng]
-            ];
+        // Standard Geocode Hydration for UI and Map
+        const hydrateCoordinates = async () => {
+            if (!user) return;
+            
+            // If already geocoded in this session, skip
+            if (routeDetails && 
+                routeDetails.start?.name === user.startingPoint && 
+                routeDetails.end?.name === user.endPoint) return;
 
-            // Draw black route line
-            L.polyline(routeCoords, {
-                color: '#000000',
-                weight: 6,
-                opacity: 1,
-                lineJoin: 'round'
-            }).addTo(mapInstanceRef.current);
+            let start = user.startingPointCoords;
+            let end = user.endPointCoords;
+            let stops = user.stopCoords || [];
 
-            // Add circular markers for stops
-            const allPoints = [
-                { ...user.startingPointCoords, name: user.startingPoint || 'Start' },
-                ...(user.stopCoords || []),
-                { ...user.endPointCoords, name: user.endPoint || 'End' }
-            ];
+            if (!start && user.startingPoint) start = await geocodeAddress(user.startingPoint);
+            if (!end && user.endPoint) end = await geocodeAddress(user.endPoint);
 
-            allPoints.forEach((point) => {
-                const circle = L.circleMarker([point.lat, point.lng], {
-                    radius: 8,
-                    fillColor: '#ffffff',
-                    fillOpacity: 1,
+            if ((!stops || stops.length === 0) && user.stops?.length > 0) {
+                const geocoded = await Promise.all(
+                    user.stops.filter(s => s && s.trim()).map(async (s) => {
+                        const c = await geocodeAddress(s);
+                        return c ? { ...c, name: s } : null;
+                    })
+                );
+                stops = geocoded.filter(Boolean);
+            }
+
+            setRouteDetails({
+                start: start ? { ...start, name: user.startingPoint } : null,
+                end: end ? { ...end, name: user.endPoint } : null,
+                stops: stops
+            });
+        };
+
+        hydrateCoordinates();
+    }, [user]);
+
+    // Draw Route and Stops if available
+    useEffect(() => {
+        if (view === 'map' && mapInstanceRef.current && routeDetails?.start && routeDetails?.end) {
+            const drawRoute = async () => {
+                const L = window.L;
+                const routePoints = [
+                    [routeDetails.start.lat, routeDetails.start.lng],
+                    ...routeDetails.stops.map(s => [s.lat, s.lng]),
+                    [routeDetails.end.lat, routeDetails.end.lng]
+                ];
+
+                const roadPath = await fetchRouteGeometry(routePoints);
+
+                if (!mapInstanceRef.current) return;
+
+                // Clear old route layers
+                mapInstanceRef.current.eachLayer((layer) => {
+                    if (
+                        (layer instanceof L.Polyline && !(layer instanceof L.Polygon) && !(layer instanceof L.CircleMarker)) ||
+                        layer instanceof L.CircleMarker
+                    ) {
+                        mapInstanceRef.current.removeLayer(layer);
+                    }
+                });
+
+                // Draw thick black road line
+                const routeLine = L.polyline(roadPath, {
                     color: '#000000',
-                    weight: 3
+                    weight: 7,
+                    opacity: 1,
+                    lineJoin: 'round',
+                    lineCap: 'round'
                 }).addTo(mapInstanceRef.current);
 
-                circle.bindTooltip(`<div style="color: #333; font-weight: 800; font-size: 13px; text-shadow: 0 0 2px white;">${point.name}</div>`, {
-                    permanent: true,
-                    direction: 'right',
-                    className: 'stop-label-tooltip',
-                    offset: [15, 0]
-                });
-            });
+                // Draw white stop markers
+                const allPoints = [
+                    routeDetails.start,
+                    ...routeDetails.stops,
+                    routeDetails.end
+                ];
 
-            // Fit map to route
-            mapInstanceRef.current.fitBounds(routeCoords, { padding: [50, 50] });
+                allPoints.forEach((point) => {
+                    const circle = L.circleMarker([point.lat, point.lng], {
+                        radius: 9,
+                        fillColor: '#ffffff',
+                        fillOpacity: 1,
+                        color: '#000000',
+                        weight: 3
+                    }).addTo(mapInstanceRef.current);
+
+                    circle.bindTooltip(`<div style="color:#222;font-weight:800;font-size:13px;text-shadow:0 0 3px white,0 0 3px white;">${point.name}</div>`, {
+                        permanent: true,
+                        direction: 'right',
+                        className: 'stop-label-tooltip',
+                        offset: [15, 0]
+                    });
+                });
+
+                // Fit map
+                mapInstanceRef.current.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
+            };
+
+            drawRoute();
         }
-    }, [view, user]);
+    }, [view, routeDetails]);
 
 
     const watchIdRef = useRef(null);
@@ -361,14 +447,19 @@ const DriverDashboard = () => {
                                 <Typography variant="h6" sx={{ color: dark.accent, fontWeight: 900, mb: 3, textTransform: 'uppercase' }}>Assigned Route Information</Typography>
                                 <Grid container spacing={3}>
                                     {[
-                                        { label: 'STARTING POINT', value: user?.startingPoint, color: '#4dabf5' },
-                                        { label: 'NEXT DESTINATION', value: user?.nextDestination, color: '#ff9800' },
-                                        { label: 'END POINT', value: user?.endPoint, color: '#f44336' }
+                                        { label: 'STARTING POINT', value: user?.startingPoint, coords: routeDetails?.start, color: '#4dabf5' },
+                                        { label: 'NEXT DESTINATION', value: user?.nextDestination, coords: null, color: '#ff9800' }, // Next dest is dynamic, typically same as a stop or end
+                                        { label: 'END POINT', value: user?.endPoint, coords: routeDetails?.end, color: '#f44336' }
                                     ].map((route, idx) => (
                                         <Grid item xs={12} sm={4} key={idx}>
-                                            <Paper sx={{ p: 2, borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.02)', border: `1px solid ${dark.border}` }}>
-                                                <Typography variant="caption" sx={{ color: route.color, fontWeight: 900 }}>{route.label}</Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 700, color: 'white' }}>{route.value || 'N/A'}</Typography>
+                                            <Paper sx={{ p: 2, borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.02)', border: `1px solid ${dark.border}`, minHeight: '100px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                                <Typography variant="caption" sx={{ color: route.color, fontWeight: 900, mb: 0.5 }}>{route.label}</Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 800, color: 'white', mb: route.coords ? 0.5 : 0 }}>{route.value || 'N/A'}</Typography>
+                                                {route.coords && (
+                                                    <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 700, fontStyle: 'italic' }}>
+                                                        {route.coords.lat.toFixed(4)}, {route.coords.lng.toFixed(4)}
+                                                    </Typography>
+                                                )}
                                             </Paper>
                                         </Grid>
                                     ))}
@@ -376,10 +467,27 @@ const DriverDashboard = () => {
                                         <Grid item xs={12}>
                                              <Paper sx={{ p: 2, borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.02)', border: `1px solid ${dark.border}` }}>
                                                 <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 900 }}>PLANNED STOPS</Typography>
-                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                                                    {user.stops.map((stop, i) => (
-                                                        <Chip key={i} label={stop} size="small" sx={{ bgcolor: 'rgba(124, 77, 255, 0.1)', color: dark.accent, fontWeight: 700, border: '1px solid rgba(124, 77, 255, 0.2)' }} />
-                                                    ))}
+                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1.5 }}>
+                                                    {user.stops.map((stop, i) => {
+                                                        const stopCoords = routeDetails?.stops?.find(s => s.name === stop);
+                                                        return (
+                                                            <Chip 
+                                                                key={i} 
+                                                                label={`${stop}${stopCoords ? ` (${stopCoords.lat.toFixed(3)}, ${stopCoords.lng.toFixed(3)})` : ''}`} 
+                                                                size="small" 
+                                                                sx={{ 
+                                                                    bgcolor: 'rgba(124, 77, 255, 0.12)', 
+                                                                    color: dark.accent, 
+                                                                    fontWeight: 800, 
+                                                                    height: 'auto',
+                                                                    py: 0.5,
+                                                                    px: 1,
+                                                                    '& .MuiChip-label': { whiteSpace: 'normal', py: 0.5 },
+                                                                    border: '1px solid rgba(124, 77, 255, 0.3)' 
+                                                                }} 
+                                                            />
+                                                        );
+                                                    })}
                                                 </Box>
                                             </Paper>
                                         </Grid>
@@ -501,31 +609,51 @@ const DriverDashboard = () => {
                         <Divider sx={{ my: 1.5, borderColor: dark.border }} />
                         
                         <Box sx={{ mb: 2 }}>
-                            <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 800, display: 'block' }}>STARTING POINT</Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 800, color: dark.text }}>{user.startingPoint || 'NOT SET'}</Typography>
+                            <Typography variant="caption" sx={{ color: dark.accent, fontWeight: 800, display: 'block' }}>STARTING POINT</Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.startingPoint || 'NOT SET'}</Typography>
+                            {routeDetails?.start && (
+                                <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 700, opacity: 0.8 }}>
+                                    COORD: {routeDetails.start.lat.toFixed(4)}, {routeDetails.start.lng.toFixed(4)}
+                                </Typography>
+                            )}
                         </Box>
 
                         <Box sx={{ mb: 2 }}>
                             <Typography variant="caption" sx={{ color: '#ff9800', fontWeight: 800, display: 'block' }}>NEXT DESTINATION</Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 800, color: dark.text }}>{user.nextDestination || 'NOT SET'}</Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.nextDestination || 'NOT SET'}</Typography>
                         </Box>
 
                         {user.stops && user.stops.length > 0 && (
                             <Box sx={{ mb: 2 }}>
                                 <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 800, display: 'block' }}>PLANNED STOPS</Typography>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                    {user.stops.map((stop, i) => (
-                                        <Typography key={i} variant="body2" sx={{ fontWeight: 700, color: dark.textSecondary, display: 'flex', alignItems: 'center' }}>
-                                            <Circle sx={{ fontSize: 6, mr: 1, color: dark.accent }} /> {stop}
-                                        </Typography>
-                                    ))}
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                    {user.stops.map((stop, i) => {
+                                        const stopCoords = routeDetails?.stops?.find(s => s.name === stop);
+                                        return (
+                                            <Box key={i}>
+                                                <Typography variant="body2" sx={{ fontWeight: 800, color: dark.textSecondary, display: 'flex', alignItems: 'center' }}>
+                                                    <Circle sx={{ fontSize: 6, mr: 1, color: dark.accent }} /> {stop}
+                                                </Typography>
+                                                {stopCoords && (
+                                                    <Typography variant="caption" sx={{ ml: 2, color: dark.textSecondary, fontSize: '0.65rem', fontStyle: 'italic', display: 'block' }}>
+                                                        {stopCoords.lat.toFixed(4)}, {stopCoords.lng.toFixed(4)}
+                                                    </Typography>
+                                                )}
+                                            </Box>
+                                        );
+                                    })}
                                 </Box>
                             </Box>
                         )}
 
                         <Box>
                             <Typography variant="caption" sx={{ color: dark.success, fontWeight: 800, display: 'block' }}>END POINT</Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 800, color: dark.text }}>{user.endPoint || 'NOT SET'}</Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.endPoint || 'NOT SET'}</Typography>
+                            {routeDetails?.end && (
+                                <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 700, opacity: 0.8 }}>
+                                    COORD: {routeDetails.end.lat.toFixed(4)}, {routeDetails.end.lng.toFixed(4)}
+                                </Typography>
+                            )}
                         </Box>
                     </Paper>
                 </Box>
