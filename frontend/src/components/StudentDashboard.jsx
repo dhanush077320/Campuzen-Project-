@@ -685,7 +685,7 @@ const StudentDashboard = () => {
             </Paper>
 
             {trackedBus && (
-                <Paper elevation={0} sx={{ p: 4, borderRadius: '32px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, minHeight: '600px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
+                <Paper elevation={0} sx={{ p: 4, borderRadius: '32px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: '0 20px 40px rgba(0,0,0,0.4)', overflowY: 'auto' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
                         <Box>
                             <Typography sx={{ color: dark.accent, fontWeight: 900, mb: 1, letterSpacing: '1px' }}>BUS UNIT #{busNumberInput}</Typography>
