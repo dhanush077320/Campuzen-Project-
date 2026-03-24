@@ -703,7 +703,8 @@ const StudentDashboard = () => {
                     <LinearBusTracker 
                         routeDetails={routeDetails} 
                         currentLocation={{lat: trackedBus.latitude, lng: trackedBus.longitude}} 
-                        boardingStopName={enrollment?.assignedStop} 
+                        boardingStopName={enrollment?.assignedStop}
+                        trackedBus={trackedBus}
                     />
                 </Paper>
             )}

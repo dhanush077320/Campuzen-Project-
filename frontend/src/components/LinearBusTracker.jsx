@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material';
 import DirectionsBusIcon from '@mui/icons-material/DirectionsBus';
 
 const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Radius of the earth in km
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a =
@@ -14,8 +14,38 @@ const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
     return R * c;
 };
 
-const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName }) => {
-    if (!routeDetails || !routeDetails.start || !routeDetails.end) {
+const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, trackedBus }) => {
+    // Build allStops from routeDetails OR fall back to trackedBus raw data
+    const allStops = useMemo(() => {
+        const result = [];
+
+        if (routeDetails?.start) {
+            result.push(routeDetails.start);
+        } else if (trackedBus?.startingPoint) {
+            result.push({ name: trackedBus.startingPoint, lat: null, lng: null });
+        }
+
+        if (routeDetails?.stops?.length > 0) {
+            routeDetails.stops.forEach(s => result.push(s));
+        } else if (trackedBus?.stops?.length > 0) {
+            trackedBus.stops.filter(s => s && s.trim()).forEach(s => {
+                result.push({ name: s, lat: null, lng: null });
+            });
+        }
+
+        if (routeDetails?.end) {
+            result.push(routeDetails.end);
+        } else if (trackedBus?.endPoint) {
+            result.push({ name: trackedBus.endPoint, lat: null, lng: null });
+        }
+
+        return result;
+    }, [routeDetails, trackedBus]);
+
+    const totalStops = allStops.length;
+
+    // If nothing available at all, show connecting message
+    if (totalStops < 2) {
         return (
             <Box sx={{ p: 4, textAlign: 'center', color: '#666' }}>
                 <Typography>Connecting to live tracking...</Typography>
@@ -23,13 +53,14 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName }) =
         );
     }
 
-    const { start, end, stops } = routeDetails;
-    const allStops = [start, ...(stops || []), end];
-    const totalStops = allStops.length;
+    // Check if we have coordinates for distance-based interpolation
+    const hasCoordinates = allStops.every(s => s.lat != null && s.lng != null);
 
-    // Calculate bus position vertically (0% to 100%)
+    // Calculate bus position (0% to 100%) along the timeline
     const busProgressPercentage = useMemo(() => {
-        if (!currentLocation || totalStops < 2) return 0;
+        if (!currentLocation || !currentLocation.lat || !currentLocation.lng) return null;
+        if (!hasCoordinates || totalStops < 2) return null;
+
         const busLat = currentLocation.lat;
         const busLng = currentLocation.lng;
 
@@ -43,12 +74,11 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName }) =
 
             const d1 = getDistanceFromLatLonInKm(busLat, busLng, p1.lat, p1.lng);
             const d2 = getDistanceFromLatLonInKm(busLat, busLng, p2.lat, p2.lng);
-            const segmentLength = getDistanceFromLatLonInKm(p1.lat, p1.lng, p2.lat, p2.lng);
 
             if (d1 + d2 < minDistanceToSegment) {
                 minDistanceToSegment = d1 + d2;
                 closestSegmentIndex = i;
-                
+
                 if (d1 === 0) fractionOnSegment = 0;
                 else if (d2 === 0) fractionOnSegment = 1;
                 else {
@@ -58,20 +88,21 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName }) =
         }
 
         const segmentProgress = (closestSegmentIndex + fractionOnSegment) / (totalStops - 1);
-        return Math.max(0, Math.min(100, (segmentProgress * 100)));
-    }, [currentLocation, allStops, totalStops]);
+        return Math.max(0, Math.min(100, segmentProgress * 100));
+    }, [currentLocation, allStops, totalStops, hasCoordinates]);
 
-    // UI Configuration to match reference
+    // UI Configuration
     const timelineColor = "#000000";
     const stopPointColor = "#ffffff";
     const highlightPointColor = "#000000";
-    const highlightBadgeColor = "#e6f4ea"; // Light green
-    const highlightBadgeText = "#1e8e3e";  // Darker green
-    const busColor = "#2196f3"; // Blue
+    const highlightBadgeColor = "#e6f4ea";
+    const highlightBadgeText = "#1e8e3e";
+    const busColor = "#2196f3";
 
     return (
         <Box sx={{ width: '100%', py: 4, px: { xs: 2, sm: 6 }, bgcolor: '#ffffff', borderRadius: '24px', position: 'relative' }}>
             <Box sx={{ position: 'relative', ml: 2, height: `${(totalStops - 1) * 80}px` }}>
+                {/* The vertical black line */}
                 <Box sx={{ 
                     position: 'absolute', 
                     top: 0, 
@@ -82,7 +113,8 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName }) =
                     zIndex: 1
                 }} />
 
-                {currentLocation && (
+                {/* Moving bus icon — only rendered if we have a valid position */}
+                {busProgressPercentage !== null && (
                     <Box sx={{
                         position: 'absolute',
                         left: '12px',
@@ -119,9 +151,12 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName }) =
                     </Box>
                 )}
 
+                {/* Stop circles and labels */}
                 {allStops.map((stop, i) => {
-                    const isBoardingStop = boardingStopName && stop.name.trim().toLowerCase() === boardingStopName.trim().toLowerCase();
+                    const isBoardingStop = boardingStopName && stop.name && stop.name.trim().toLowerCase() === boardingStopName.trim().toLowerCase();
                     const topPercentage = (i / (totalStops - 1)) * 100;
+                    const isFirst = i === 0;
+                    const isLast = i === totalStops - 1;
 
                     return (
                         <Box key={i} sx={{
@@ -143,16 +178,19 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName }) =
                                 zIndex: 2,
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center'
+                                justifyContent: 'center',
+                                flexShrink: 0
                             }} />
 
                             <Box sx={{ ml: 4, display: 'flex', flexDirection: 'column' }}>
                                 <Typography sx={{ 
                                     fontSize: '15px', 
-                                    fontWeight: isBoardingStop ? 700 : 500, 
+                                    fontWeight: (isBoardingStop || isFirst || isLast) ? 700 : 500, 
                                     color: '#333' 
                                 }}>
                                     {stop.name}
+                                    {isFirst && <Typography component="span" sx={{ fontSize: '11px', color: '#999', ml: 1 }}>(Start)</Typography>}
+                                    {isLast && <Typography component="span" sx={{ fontSize: '11px', color: '#999', ml: 1 }}>(End)</Typography>}
                                 </Typography>
                                 
                                 {isBoardingStop && (

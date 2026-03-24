@@ -502,7 +502,8 @@ const DriverDashboard = () => {
                             <Box sx={{ maxWidth: 800, mx: 'auto' }}>
                                 <LinearBusTracker 
                                     routeDetails={routeDetails} 
-                                    currentLocation={currentLocation} 
+                                    currentLocation={currentLocation}
+                                    trackedBus={user}
                                 />
                             </Box>
                         </Paper>

@@ -463,7 +463,8 @@ const StaffDashboard = () => {
 
                     <LinearBusTracker 
                         routeDetails={routeDetails} 
-                        currentLocation={{lat: trackedBus.latitude, lng: trackedBus.longitude}} 
+                        currentLocation={{lat: trackedBus.latitude, lng: trackedBus.longitude}}
+                        trackedBus={trackedBus}
                     />
                 </Paper>
             )}

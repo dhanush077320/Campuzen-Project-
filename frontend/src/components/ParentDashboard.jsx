@@ -882,6 +882,7 @@ const ParentDashboard = () => {
                         routeDetails={routeDetails} 
                         currentLocation={{lat: trackedBus.latitude, lng: trackedBus.longitude}} 
                         boardingStopName={enrollment?.busStop}
+                        trackedBus={trackedBus}
                     />
                 </Paper>
             )}
