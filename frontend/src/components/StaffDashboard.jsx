@@ -164,19 +164,19 @@ const StaffDashboard = () => {
                     attributionControl: false
                 }).setView([trackedBus.latitude, trackedBus.longitude], 16);
 
-                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                    maxZoom: 19
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 20
                 }).addTo(map);
 
                 const busIcon = L.divIcon({
-                    html: `<div style="background-color: ${dark.accent}; border: 2px solid white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px ${dark.accent};">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                    html: `<div style="background-color: #3366ff; border: 2px solid white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
                                 <path d="M18,11H6V6h12V11z M16.5,17c0.83,0,1.5-0.67,1.5-1.5S17.33,14,16.5,14S15,14.67,15,15.5S15.67,17,16.5,17z M7.5,17 c0.83,0,1.5-0.67,1.5-1.5S8.33,14,7.5,14S6,14.67,6,15.5S6.67,17,7.5,17z M4,16c0,0.88,0.39,1.67,1,2.22V20c0,0.55,0.45,1,1,1h1 c0.55,0,1-0.45,1-1v-1h8v1c0,0.55,0.45,1,1,1h1c0.55,0,1-0.45,1-1v-1.78c0.61-0.55,1-1.34,1-2.22V6c0-3.5-3.58-4-8-4s-8,0.5-8,4V16z" />
                             </svg>
                            </div>`,
-                    className: 'bus-tracking-icon',
-                    iconSize: [30, 30],
-                    iconAnchor: [15, 15]
+                    className: 'custom-bus-marker',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
                 });
 
                 trackingMarkerRef.current = L.marker([trackedBus.latitude, trackedBus.longitude], { icon: busIcon }).addTo(map);
