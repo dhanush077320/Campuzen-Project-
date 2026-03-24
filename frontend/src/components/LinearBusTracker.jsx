@@ -153,9 +153,9 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
             {/* Live coordinates and status badge */}
             <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#00d68f', boxShadow: '0 0 8px #00d68f' }} />
+                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: currentLocation?.lat ? '#00d68f' : '#666', boxShadow: currentLocation?.lat ? '0 0 8px #00d68f' : 'none' }} />
                     <Typography variant="caption" sx={{ color: '#555', fontWeight: 700 }}>
-                        Bus GPS: {currentLocation.lat.toFixed(5)}, {currentLocation.lng.toFixed(5)}
+                        Bus GPS: {currentLocation?.lat != null ? `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}` : 'Searching...'}
                     </Typography>
                     {!hasAllCoords && !hasEnds && (
                         <Typography variant="caption" sx={{ color: '#f59e0b', fontWeight: 600 }}>
