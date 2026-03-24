@@ -75,41 +75,49 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
         return { index: bestIdx, distance: minStopDist };
     }, [currentLocation, allStops]);
 
-    // 2. Geofence Logic (Stop Detection)
-    // Identify which stops are completed based on distance (Threshold: 0.05 km / 50 meters)
-    const stopStates = useMemo(() => {
-        const loc = currentLocation;
-        if (!loc || !loc.lat || !loc.lng) return allStops.map(() => false);
-
-        // We'll consider a stop completed if the bus has been within 50m of it
-        // Or, for the UI "trace" effect, if the bus has progressed past its percentage
-        return allStops.map((stop, idx) => {
-            if (stop.lat == null || stop.lng == null) return false;
-            const dist = getDistanceFromLatLonInKm(loc.lat, loc.lng, stop.lat, stop.lng);
-            return dist < 0.05; // 50 meters threshold
-        });
-    }, [currentLocation, allStops]);
-
-    // 1. Mapping Logic (GPS to UI Pixels)
+    // 1. The "Track Progress" Logic
     const busProgressPercentage = useMemo(() => {
         const loc = currentLocation;
         if (!loc || !loc.lat || !loc.lng || isNaN(loc.lat) || isNaN(loc.lng)) return null;
-        if (totalStops < 2) return null;
+        if (totalStops < 2 || !hasEnds) return null;
 
-        if (hasEnds) {
-            const dStart = getDistanceFromLatLonInKm(loc.lat, loc.lng, startStop.lat, startStop.lng);
-            const dEnd = getDistanceFromLatLonInKm(loc.lat, loc.lng, endStop.lat, endStop.lng);
+        // Total Distance of the route (Start to End)
+        const totalRouteDistance = getDistanceFromLatLonInKm(startStop.lat, startStop.lng, endStop.lat, endStop.lng);
+        // Distance from Start to Current
+        const distanceFromStart = getDistanceFromLatLonInKm(startStop.lat, startStop.lng, loc.lat, loc.lng);
+
+        if (totalRouteDistance === 0) return 0;
+        
+        // Output: A percentage (Progress %)
+        const percentage = (distanceFromStart / totalRouteDistance) * 100;
+        return Math.max(0, Math.min(100, percentage));
+    }, [currentLocation, totalStops, hasEnds, startStop, endStop]);
+
+    // 2. The "Geofence" Logic (Auto-Fill Stops)
+    // Marks circles as blue filled as the bus passes them or is within 100m
+    const stopsStatus = useMemo(() => {
+        return allStops.map((stop, idx) => {
+            const stopProgressPct = (idx / (totalStops - 1)) * 100;
             
-            // User Formula: (Distance Traveled / Total Route Distance) * 100
-            // We use (dStart / (dStart + dEnd)) as a projection to handle GPS jitter
-            const totalProjected = dStart + dEnd;
-            if (totalProjected === 0) return 0;
-            const progress = (dStart / totalProjected) * 100;
-            return Math.max(0, Math.min(100, progress));
-        }
+            // A stop is "Reached" if:
+            // 1. The bus has progressed past its position on the timeline
+            // 2. OR the bus is currently within 100 meters (Threshold)
+            let isReached = false;
+            if (busProgressPercentage !== null && busProgressPercentage >= stopProgressPct) {
+                isReached = true;
+            } else if (currentLocation?.lat != null && stop.lat != null) {
+                const dist = getDistanceFromLatLonInKm(currentLocation.lat, currentLocation.lng, stop.lat, stop.lng);
+                if (dist < 0.1) isReached = true; // 100 meters threshold
+            }
+            
+            return { ...stop, isReached };
+        });
+    }, [allStops, busProgressPercentage, currentLocation, totalStops]);
 
-        return null;
-    }, [currentLocation, allStops, totalStops, hasEnds, startStop, endStop]);
+    // Active Target: The index of the next stop the bus is looking for
+    const targetStopIndex = useMemo(() => {
+        return stopsStatus.findIndex(s => !s.isReached);
+    }, [stopsStatus]);
 
     // All hooks done — safe to do early return now
     if (totalStops < 2) {
@@ -223,18 +231,20 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
                 )}
 
                 {/* Stops */}
-                {allStops.map((stop, i) => {
+                {stopsStatus.map((stop, i) => {
                     const isBoardingStop =
                         boardingStopName &&
                         stop.name &&
                         stop.name.trim().toLowerCase() === boardingStopName.trim().toLowerCase();
+                    
                     const topPct = (i / (totalStops - 1)) * 100;
                     const isFirst = i === 0;
                     const isLast = i === totalStops - 1;
 
-                    // A stop is "visited" if the bus has progressed past its percentage or is within 50m
-                    const isCompleted = stopStates[i] || (busProgressPercentage !== null && busProgressPercentage >= topPct - 1);
-                    const isCurrent = nearestStopInfo && nearestStopInfo.index === i && nearestStopInfo.distance < 0.05;
+                    // A stop is "Reached" (Blue Filled) if isReached is true
+                    const isReached = stop.isReached;
+                    // Current target is the first unreached stop
+                    const isTarget = targetStopIndex === i;
 
                     return (
                         <Box
@@ -252,12 +262,12 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
                         >
                             {/* Stop circle with detection highlight */}
                             <Box sx={{
-                                width: isCurrent ? 30 : 24,
-                                height: isCurrent ? 30 : 24,
+                                width: isTarget ? 32 : 24,
+                                height: isTarget ? 32 : 24,
                                 borderRadius: '50%',
-                                border: `4px solid ${isCompleted || isCurrent ? traceColor : '#000000'}`,
-                                bgcolor: isBoardingStop ? boardingBg : stopBg,
-                                boxShadow: isCurrent ? `0 0 15px ${traceColor}` : 'none',
+                                border: `4px solid ${isReached ? traceColor : (isTarget ? traceColor : '#000000')}`,
+                                bgcolor: isReached ? traceColor : (isBoardingStop ? boardingBg : stopBg),
+                                boxShadow: isTarget ? `0 0 15px ${traceColor}` : 'none',
                                 zIndex: 4,
                                 flexShrink: 0,
                                 transition: 'all 0.4s ease',
@@ -265,23 +275,28 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
                                 alignItems: 'center',
                                 justifyContent: 'center'
                             }}>
-                                {isCompleted && !isCurrent && (
-                                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: traceColor }} />
+                                {isReached && (
+                                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#ffffff' }} />
                                 )}
                             </Box>
 
                             {/* Label */}
                             <Box sx={{ ml: 4 }}>
                                 <Typography sx={{
-                                    fontSize: '15px',
-                                    fontWeight: (isBoardingStop || isFirst || isLast || isCurrent) ? 800 : 500,
-                                    color: isCompleted ? traceColor : '#222',
+                                    fontSize: isTarget ? '16px' : '15px',
+                                    fontWeight: (isBoardingStop || isFirst || isLast || isTarget) ? 900 : 500,
+                                    color: isReached ? traceColor : (isTarget ? traceColor : '#222'),
                                     lineHeight: 1.3,
-                                    transition: 'color 0.4s ease'
+                                    transition: 'all 0.4s ease'
                                 }}>
                                     {stop.name}
                                     {isFirst && <Typography component="span" sx={{ fontSize: '11px', color: '#888', ml: 1 }}>(Start)</Typography>}
                                     {isLast && <Typography component="span" sx={{ fontSize: '11px', color: '#888', ml: 1 }}>(End)</Typography>}
+                                    {isTarget && (
+                                        <Typography component="span" sx={{ fontSize: '12px', color: traceColor, ml: 1, fontWeight: 900, textTransform: 'uppercase' }}>
+                                            • NEXT DESTINATION
+                                        </Typography>
+                                    )}
                                 </Typography>
 
                                 {isBoardingStop && (
