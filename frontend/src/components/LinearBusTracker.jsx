@@ -43,20 +43,9 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
     }, [routeDetails, trackedBus]);
 
     const totalStops = allStops.length;
+    const hasCoordinates = totalStops >= 2 && allStops.every(s => s.lat != null && s.lng != null);
 
-    // If nothing available at all, show connecting message
-    if (totalStops < 2) {
-        return (
-            <Box sx={{ p: 4, textAlign: 'center', color: '#666' }}>
-                <Typography>Connecting to live tracking...</Typography>
-            </Box>
-        );
-    }
-
-    // Check if we have coordinates for distance-based interpolation
-    const hasCoordinates = allStops.every(s => s.lat != null && s.lng != null);
-
-    // Calculate bus position (0% to 100%) along the timeline
+    // Calculate bus position (0% to 100%) — ALL hooks must be above any early return
     const busProgressPercentage = useMemo(() => {
         if (!currentLocation || !currentLocation.lat || !currentLocation.lng) return null;
         if (!hasCoordinates || totalStops < 2) return null;
@@ -91,6 +80,15 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
         return Math.max(0, Math.min(100, segmentProgress * 100));
     }, [currentLocation, allStops, totalStops, hasCoordinates]);
 
+    // Early return AFTER all hooks
+    if (totalStops < 2) {
+        return (
+            <Box sx={{ p: 4, textAlign: 'center', color: '#666' }}>
+                <Typography>Connecting to live tracking...</Typography>
+            </Box>
+        );
+    }
+
     // UI Configuration
     const timelineColor = "#000000";
     const stopPointColor = "#ffffff";
@@ -113,7 +111,7 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
                     zIndex: 1
                 }} />
 
-                {/* Moving bus icon — only rendered if we have a valid position */}
+                {/* Moving bus icon */}
                 {busProgressPercentage !== null && (
                     <Box sx={{
                         position: 'absolute',
