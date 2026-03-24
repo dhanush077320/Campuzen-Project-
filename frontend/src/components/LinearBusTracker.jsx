@@ -19,24 +19,30 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
     const allStops = useMemo(() => {
         const result = [];
 
-        if (routeDetails?.start) {
-            result.push(routeDetails.start);
-        } else if (trackedBus?.startingPoint) {
-            result.push({ name: trackedBus.startingPoint, lat: null, lng: null });
+        // 1. Start Point
+        const startName = trackedBus?.startingPoint;
+        const startGeo = routeDetails?.start;
+        if (startGeo || startName) {
+            result.push(startGeo || { name: startName, lat: null, lng: null });
         }
 
-        if (routeDetails?.stops?.length > 0) {
-            routeDetails.stops.forEach(s => result.push(s));
-        } else if (trackedBus?.stops?.length > 0) {
-            trackedBus.stops.filter(s => s && s.trim()).forEach(s =>
-                result.push({ name: s, lat: null, lng: null })
-            );
-        }
+        // 2. Intermediate Stops - ENSURE WE GET ALL OF THEM
+        // We use the names from trackedBus.stops as the master list
+        const stopNames = trackedBus?.stops || [];
+        const geocodedStops = routeDetails?.stops || [];
 
-        if (routeDetails?.end) {
-            result.push(routeDetails.end);
-        } else if (trackedBus?.endPoint) {
-            result.push({ name: trackedBus.endPoint, lat: null, lng: null });
+        stopNames.forEach(name => {
+            if (!name || !name.trim()) return;
+            // Check if we have geocoded data for this stop name
+            const geo = geocodedStops.find(s => s.name?.trim().toLowerCase() === name.trim().toLowerCase());
+            result.push(geo || { name: name, lat: null, lng: null });
+        });
+
+        // 3. End Point
+        const endName = trackedBus?.endPoint;
+        const endGeo = routeDetails?.end;
+        if (endGeo || endName) {
+            result.push(endGeo || { name: endName, lat: null, lng: null });
         }
 
         return result;

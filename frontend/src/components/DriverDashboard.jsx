@@ -497,12 +497,7 @@ const DriverDashboard = () => {
                             Live Itinerary Tracker 
                         </Typography>
                         
-                        <Paper elevation={24} sx={{ 
-                            p: 4, 
-                            borderRadius: '32px', 
-                            bgcolor: dark.surface, 
-                            border: `1px solid ${dark.border}`, 
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.4)', 
+                        <Box sx={{ 
                             mb: 4,
                             maxHeight: '75vh',
                             overflowY: 'auto',
@@ -511,7 +506,6 @@ const DriverDashboard = () => {
                             '&::-webkit-scrollbar-track': { background: 'transparent' },
                             '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.1)', borderRadius: '10px' }
                         }}>
-                            {/* Instead of the map, show the LinearBusTracker centered */}
                             <Box sx={{ maxWidth: 800, mx: 'auto' }}>
                                 <LinearBusTracker 
                                     routeDetails={routeDetails} 
@@ -519,7 +513,7 @@ const DriverDashboard = () => {
                                     trackedBus={user}
                                 />
                             </Box>
-                        </Paper>
+                        </Box>
                         <Box sx={{ height: 200 }} /> {/* Extra spacer for the floating bottom bar */}
                     </Container>
                 </Box>
