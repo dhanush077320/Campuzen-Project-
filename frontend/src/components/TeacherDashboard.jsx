@@ -320,11 +320,11 @@ const TeacherDashboard = () => {
                             weight: 3
                         }).addTo(map);
 
-                        circle.bindTooltip(`<div style="color: white; font-weight: 900; font-size: 12px; text-shadow: 1px 1px 2px black;">${point.name}</div>`, {
+                        circle.bindTooltip(`<div style="color: white; font-weight: 900; font-size: 13px; text-shadow: 0 2px 4px black, 0 0 2px black;">${point.name.toUpperCase()}</div>`, {
                             permanent: true,
                             direction: 'right',
                             className: 'stop-label-tooltip',
-                            offset: [10, 0]
+                            offset: [15, 0]
                         });
                     });
                 }
