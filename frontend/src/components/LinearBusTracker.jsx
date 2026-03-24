@@ -108,23 +108,61 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
         }
     }, [currentLocation, startStop]);
 
-    // 1. The "Track Progress" Logic
+    // 1. IMPROVED: Segment-Aware Track Progress Logic
     const busProgressPercentage = useMemo(() => {
         const loc = currentLocation;
         if (!loc || !loc.lat || !loc.lng || isNaN(loc.lat) || isNaN(loc.lng)) return null;
-        if (totalStops < 2 || !hasEnds) return null;
+        if (totalStops < 2 || !nearestStopInfo) return null;
 
-        // Total Distance of the route (Start to End)
-        const totalRouteDistance = getDistanceFromLatLonInKm(startStop.lat, startStop.lng, endStop.lat, endStop.lng);
-        // Distance from Start to Current
-        const distanceFromStart = getDistanceFromLatLonInKm(startStop.lat, startStop.lng, loc.lat, loc.lng);
-
-        if (totalRouteDistance === 0) return 0;
+        const nearestIdx = nearestStopInfo.index;
         
-        // Output: A percentage (Progress %)
-        const percentage = (distanceFromStart / totalRouteDistance) * 100;
-        return Math.max(0, Math.min(100, percentage));
-    }, [currentLocation, totalStops, hasEnds, startStop, endStop]);
+        // Find the best segment (i, i+1) the bus is currently traversing
+        // We look at the segment ending at nearestIdx and the one starting at nearestIdx
+        let segmentStartIdx = -1;
+        let segmentEndIdx = -1;
+        let segmentRatio = 0;
+
+        const prevStop = allStops[nearestIdx - 1];
+        const currentStop = allStops[nearestIdx];
+        const nextStop = allStops[nearestIdx + 1];
+
+        if (nearestIdx === 0) {
+            // Bus is at or before the first stop
+            segmentStartIdx = 0;
+            segmentEndIdx = 1;
+            segmentRatio = 0; // Stick to start
+        } else if (nearestIdx === totalStops - 1) {
+            // Bus is at or past the last stop
+            segmentStartIdx = totalStops - 2;
+            segmentEndIdx = totalStops - 1;
+            segmentRatio = 1; // Stick to end
+        } else {
+            // General case: Bus is between (prev, current) or (current, next)
+            const dPrev = getDistanceFromLatLonInKm(loc.lat, loc.lng, prevStop.lat, prevStop.lng);
+            const dNext = getDistanceFromLatLonInKm(loc.lat, loc.lng, nextStop.lat, nextStop.lng);
+            
+            // If bus is significantly closer to next than prev, it's likely moving forward
+            if (dNext < dPrev) {
+                // Moving from current towards next
+                segmentStartIdx = nearestIdx;
+                segmentEndIdx = nearestIdx + 1;
+                const dSeg = getDistanceFromLatLonInKm(currentStop.lat, currentStop.lng, nextStop.lat, nextStop.lng);
+                const dFromStart = getDistanceFromLatLonInKm(loc.lat, loc.lng, currentStop.lat, currentStop.lng);
+                segmentRatio = dSeg > 0 ? Math.min(1, dFromStart / dSeg) : 0;
+            } else {
+                // Still approaching current from prev
+                segmentStartIdx = nearestIdx - 1;
+                segmentEndIdx = nearestIdx;
+                const dSeg = getDistanceFromLatLonInKm(prevStop.lat, prevStop.lng, currentStop.lat, currentStop.lng);
+                const dFromStart = getDistanceFromLatLonInKm(loc.lat, loc.lng, prevStop.lat, prevStop.lng);
+                segmentRatio = dSeg > 0 ? Math.min(1, dFromStart / dSeg) : 0;
+            }
+        }
+
+        // Global UI % = (StartIndex + Ratio) / (Total - 1) * 100
+        const globalProgress = ((segmentStartIdx + segmentRatio) / (totalStops - 1)) * 100;
+        return Math.max(0, Math.min(100, globalProgress));
+    }, [currentLocation, totalStops, allStops, nearestStopInfo]);
 
     // 2. The "Geofence" Logic (Auto-Fill Stops & Index-Based Completion)
     const stopsStatus = useMemo(() => {
@@ -134,10 +172,10 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
         return allStops.map((stop, idx) => {
             const stopProgressPct = (idx / (totalStops - 1)) * 100;
             
-            // "Fill-Behind" Rule: Automatically mark all stops before Current Stop index as completed
+            // "Fill-Behind" Rule: Automatically mark all stops BEFORE nearest index as reached
             let isReached = false;
             
-            if (idx <= nearestIdx && nearestIdx !== -1) {
+            if (nearestIdx !== -1 && idx < nearestIdx) {
                 isReached = true;
             } else if (busProgressPercentage !== null && busProgressPercentage >= stopProgressPct) {
                 isReached = true;
