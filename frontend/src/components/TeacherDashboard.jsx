@@ -1048,7 +1048,7 @@ const TeacherDashboard = () => {
                 <style>
                     {`
                         .stop-tooltip { background: #000000 !important; border: 1px solid white !important; color: white !important; font-weight: 800 !important; font-size: 10px !important; border-radius: 4px !important; padding: 2px 8px !important; }
-                        .stop-label-tooltip { background: transparent !important; border: none !important; box-shadow: none !important; color: white !important; font-weight: 900 !important; font-size: 12px !important; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 5px rgba(0,0,0,0.8) !important; letter-spacing: 0.5px !important; }
+                        .stop-label-tooltip { background: transparent !important; border: none !important; box-shadow: none !important; color: white !important; font-weight: 900 !important; font-size: 13px !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 2px 4px rgba(0,0,0,0.9) !important; letter-spacing: 0.5px !important; white-space: nowrap !important; }
                         .stop-label-tooltip::before { display: none !important; }
                     `}
                 </style>

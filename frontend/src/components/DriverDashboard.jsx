@@ -146,11 +146,11 @@ const DriverDashboard = () => {
                     weight: 3
                 }).addTo(mapInstanceRef.current);
 
-                circle.bindTooltip(`<div style="color: white; font-weight: 900; font-size: 12px; text-shadow: 1px 1px 2px black;">${point.name}</div>`, {
+                circle.bindTooltip(`<div style="color: white; font-weight: 900; font-size: 13px; text-shadow: 0 2px 4px black, 0 0 2px black;">${point.name.toUpperCase()}</div>`, {
                     permanent: true,
                     direction: 'right',
                     className: 'stop-label-tooltip',
-                    offset: [10, 0]
+                    offset: [15, 0]
                 });
             });
 
@@ -548,7 +548,7 @@ const DriverDashboard = () => {
                     .dispatch-tooltip { background: rgba(15, 23, 42, 0.98) !important; border: 1px solid rgba(255,255,255,0.15) !important; color: white !important; font-weight: 900 !important; font-size: 11px !important; letter-spacing: 1.5px !important; padding: 4px 12px !important; border-radius: 6px !important; box-shadow: 0 10px 15px rgba(0,0,0,0.4) !important; }
                     .dispatch-tooltip::before { border-top-color: rgba(15, 23, 42, 0.98) !important; }
                     .stop-tooltip { background: #000000 !important; border: 1px solid white !important; color: white !important; font-weight: 800 !important; font-size: 10px !important; border-radius: 4px !important; padding: 2px 8px !important; }
-                    .stop-label-tooltip { background: transparent !important; border: none !important; box-shadow: none !important; color: white !important; font-weight: 900 !important; font-size: 12px !important; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 5px rgba(0,0,0,0.8) !important; letter-spacing: 0.5px !important; }
+                    .stop-label-tooltip { background: transparent !important; border: none !important; box-shadow: none !important; color: white !important; font-weight: 900 !important; font-size: 13px !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 2px 4px rgba(0,0,0,0.9) !important; letter-spacing: 0.5px !important; white-space: nowrap !important; }
                     .stop-label-tooltip::before { display: none !important; }
                 `}
             </style>
