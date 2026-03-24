@@ -90,12 +90,12 @@ const DriverDashboard = () => {
                 attributionControl: false
             }).setView(center, 15);
 
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 19
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 20
             }).addTo(mapInstanceRef.current);
 
             const busIcon = L.divIcon({
-                html: `<div style="background-color: ${dark.accent}; border: 3px solid white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px ${dark.accent};">
+                html: `<div style="background-color: #3366ff; border: 3px solid white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
                             <path d="M18,11H6V6h12V11z M16.5,17c0.83,0,1.5-0.67,1.5-1.5S17.33,14,16.5,14S15,14.67,15,15.5S15.67,17,16.5,17z M7.5,17 c0.83,0,1.5-0.67,1.5-1.5S8.33,14,7.5,14S6,14.67,6,15.5S6.67,17,7.5,17z M4,16c0,0.88,0.39,1.67,1,2.22V20c0,0.55,0.45,1,1,1h1 c0.55,0,1-0.45,1-1v-1h8v1c0,0.55,0.45,1,1,1h1c0.55,0,1-0.45,1-1v-1.78c0.61-0.55,1-1.34,1-2.22V6c0-3.5-3.58-4-8-4s-8,0.5-8,4V16z" />
                         </svg>
@@ -146,7 +146,7 @@ const DriverDashboard = () => {
                     weight: 3
                 }).addTo(mapInstanceRef.current);
 
-                circle.bindTooltip(`<div style="color: white; font-weight: 900; font-size: 13px; text-shadow: 0 2px 4px black, 0 0 2px black;">${point.name.toUpperCase()}</div>`, {
+                circle.bindTooltip(`<div style="color: #333; font-weight: 800; font-size: 13px; text-shadow: 0 0 2px white;">${point.name}</div>`, {
                     permanent: true,
                     direction: 'right',
                     className: 'stop-label-tooltip',
@@ -548,7 +548,7 @@ const DriverDashboard = () => {
                     .dispatch-tooltip { background: rgba(15, 23, 42, 0.98) !important; border: 1px solid rgba(255,255,255,0.15) !important; color: white !important; font-weight: 900 !important; font-size: 11px !important; letter-spacing: 1.5px !important; padding: 4px 12px !important; border-radius: 6px !important; box-shadow: 0 10px 15px rgba(0,0,0,0.4) !important; }
                     .dispatch-tooltip::before { border-top-color: rgba(15, 23, 42, 0.98) !important; }
                     .stop-tooltip { background: #000000 !important; border: 1px solid white !important; color: white !important; font-weight: 800 !important; font-size: 10px !important; border-radius: 4px !important; padding: 2px 8px !important; }
-                    .stop-label-tooltip { background: transparent !important; border: none !important; box-shadow: none !important; color: white !important; font-weight: 900 !important; font-size: 13px !important; text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 2px 4px rgba(0,0,0,0.9) !important; letter-spacing: 0.5px !important; white-space: nowrap !important; }
+                    .stop-label-tooltip { background: transparent !important; border: none !important; box-shadow: none !important; color: #333 !important; font-weight: 800 !important; font-size: 13px !important; text-shadow: 0 0 3px white, 0 0 3px white, 0 0 5px white !important; letter-spacing: 0.5px !important; white-space: nowrap !important; }
                     .stop-label-tooltip::before { display: none !important; }
                 `}
             </style>
