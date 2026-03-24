@@ -13,6 +13,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import LinearBusTracker from './LinearBusTracker';
 
 const drawerWidth = 240;
 
@@ -53,8 +54,6 @@ const StudentDashboard = () => {
     const [busNumberInput, setBusNumberInput] = useState('');
     const [trackedBus, setTrackedBus] = useState(null);
     const [routeDetails, setRouteDetails] = useState(null);
-    const trackingMapRef = React.useRef(null);
-    const trackingMarkerRef = React.useRef(null);
     const trackingIntervalRef = React.useRef(null);
 
     // Attendance view state
@@ -151,14 +150,7 @@ const StudentDashboard = () => {
     const fetchBusLocation = async (busNo) => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/bus-location/${busNo}`);
-            const data = response.data;
-            setTrackedBus(data);
-            
-            if (trackingMarkerRef.current && trackingMapRef.current) {
-                const newPos = [data.latitude, data.longitude];
-                trackingMarkerRef.current.setLatLng(newPos);
-                trackingMapRef.current.panTo(newPos, { animate: true });
-            }
+            setTrackedBus(response.data);
         } catch (error) {
             console.error("Tracking Error:", error);
             alert(error.response?.data?.message || "Bus not found or offline");
@@ -224,88 +216,7 @@ const StudentDashboard = () => {
             trackingIntervalRef.current = null;
         }
         setTrackedBus(null);
-        trackingMapRef.current = null;
-        trackingMarkerRef.current = null;
     };
-
-    useEffect(() => {
-        if (trackedBus && !trackingMapRef.current) {
-            const L = window.L;
-            setTimeout(() => {
-                const container = document.getElementById('tracking-map');
-                if (!container || trackingMapRef.current) return;
-
-                const map = L.map(container, {
-                    zoomControl: false,
-                    attributionControl: false
-                }).setView([trackedBus.latitude, trackedBus.longitude], 16);
-
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 20
-                }).addTo(map);
-
-                const busIcon = L.divIcon({
-                    html: `<div style="background-color: #3366ff; border: 3px solid white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                                <path d="M18,11H6V6h12V11z M16.5,17c0.83,0,1.5-0.67,1.5-1.5S17.33,14,16.5,14S15,14.67,15,15.5S15.67,17,16.5,17z M7.5,17 c0.83,0,1.5-0.67,1.5-1.5S8.33,14,7.5,14S6,14.67,6,15.5S6.67,17,7.5,17z M4,16c0,0.88,0.39,1.67,1,2.22V20c0,0.55,0.45,1,1,1h1 c0.55,0,1-0.45,1-1v-1h8v1c0,0.55,0.45,1,1,1h1c0.55,0,1-0.45,1-1v-1.78c0.61-0.55,1-1.34,1-2.22V6c0-3.5-3.58-4-8-4s-8,0.5-8,4V16z" />
-                            </svg>
-                           </div>`,
-                    className: 'custom-bus-marker',
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 20]
-                });
-
-                trackingMarkerRef.current = L.marker([trackedBus.latitude, trackedBus.longitude], { icon: busIcon }).addTo(map);
-                trackingMapRef.current = map;
-
-                // Draw Route and Stops — with geocoding fallback
-                if (routeDetails?.start && routeDetails?.end) {
-                    const drawRoute = async () => {
-                        const routePoints = [
-                            [routeDetails.start.lat, routeDetails.start.lng],
-                            ...routeDetails.stops.map(s => [s.lat, s.lng]),
-                            [routeDetails.end.lat, routeDetails.end.lng]
-                        ];
-
-                        let roadPath = routePoints;
-                        try {
-                            const coordsString = routePoints.map(p => `${p[1]},${p[0]}`).join(';');
-                            const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
-                            const response = await axios.get(url);
-                            if (response.data.routes && response.data.routes[0]) {
-                                roadPath = response.data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-                            }
-                        } catch (e) { console.error('Routing error:', e); }
-
-                        if (!trackingMapRef.current) return;
-
-                        // Clear old route layers
-                        trackingMapRef.current.eachLayer((layer) => {
-                            if ((layer instanceof window.L.Polyline && !(layer instanceof window.L.Polygon) && !(layer instanceof window.L.CircleMarker)) || layer instanceof window.L.CircleMarker) {
-                                trackingMapRef.current.removeLayer(layer);
-                            }
-                        });
-
-                        const routeLine = window.L.polyline(roadPath, { color: '#000000', weight: 7, opacity: 1, lineJoin: 'round', lineCap: 'round' }).addTo(trackingMapRef.current);
-                        trackingMapRef.current.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
-
-                        const allPoints = [routeDetails.start, ...routeDetails.stops, routeDetails.end];
-
-                        allPoints.forEach((point) => {
-                            const circle = window.L.circleMarker([point.lat, point.lng], {
-                                radius: 9, fillColor: '#ffffff', fillOpacity: 1, color: '#000000', weight: 3
-                            }).addTo(trackingMapRef.current);
-                            circle.bindTooltip(`<div style="color:#222;font-weight:800;font-size:13px;text-shadow:0 0 3px white,0 0 3px white;">${point.name}</div>`, {
-                                permanent: true, direction: 'right', className: 'stop-label-tooltip', offset: [15, 0]
-                            });
-                        });
-                    };
-
-                    drawRoute();
-                }
-            }, 100);
-        }
-    }, [trackedBus]);
 
     useEffect(() => {
         return () => stopBusTracking();
@@ -774,45 +685,26 @@ const StudentDashboard = () => {
             </Paper>
 
             {trackedBus && (
-                <Paper elevation={0} sx={{ p: 2, borderRadius: '32px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, height: '600px', position: 'relative', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
-                    <Box id="tracking-map" sx={{ height: '100%', width: '100%', borderRadius: '24px' }} />
-                    <Box sx={{ position: 'absolute', top: 25, right: 25, zIndex: 1000, bgcolor: 'rgba(15, 20, 37, 0.95)', p: 2.5, borderRadius: '20px', border: `1px solid ${dark.border}`, backdropFilter: 'blur(10px)', minWidth: 260, maxHeight: '85%', overflowY: 'auto' }}>
-                        <Typography sx={{ color: dark.accent, fontWeight: 900, mb: 1, letterSpacing: '1px' }}>BUS UNIT #{busNumberInput}</Typography>
-                        <Divider sx={{ borderColor: dark.border, mb: 1.5 }} />
-                        <Typography variant="body2" sx={{ color: dark.text, fontWeight: 800 }}>Driver: {trackedBus.driverName}</Typography>
-                        <Typography variant="caption" sx={{ color: dark.textSecondary, display: 'block', mb: 1.5 }}>Updated: {new Date(trackedBus.lastUpdated).toLocaleTimeString()}</Typography>
-                        
-                        <Typography variant="overline" sx={{ color: dark.accentBlue, fontWeight: 900, letterSpacing: '1px', display: 'block', mb: 1 }}>Route Details</Typography>
-                        
-                        <Box sx={{ mb: 1.5 }}>
-                            <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 800 }}>STARTING POINT</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 800, color: '#fff' }}>{trackedBus.startingPoint}</Typography>
-                            {routeDetails?.start && <Typography variant="caption" sx={{ color: dark.textSecondary, fontSize: '0.65rem' }}>{routeDetails.start.lat.toFixed(4)}, {routeDetails.start.lng.toFixed(4)}</Typography>}
+                <Paper elevation={0} sx={{ p: 4, borderRadius: '32px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, minHeight: '600px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+                        <Box>
+                            <Typography sx={{ color: dark.accent, fontWeight: 900, mb: 1, letterSpacing: '1px' }}>BUS UNIT #{busNumberInput}</Typography>
+                            <Typography variant="body2" sx={{ color: dark.text, fontWeight: 800 }}>Operator: {trackedBus.driverName}</Typography>
                         </Box>
-
-                        {routeDetails?.stops?.length > 0 && (
-                            <Box sx={{ mb: 1.5 }}>
-                                <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 800 }}>PLANNED STOPS</Typography>
-                                {routeDetails.stops.map((s, i) => (
-                                    <Box key={i} sx={{ mb: 0.5, pl: 1, borderLeft: '2px solid rgba(255,255,255,0.1)' }}>
-                                        <Typography variant="caption" sx={{ color: '#fff', fontWeight: 700, display: 'block' }}>• {s.name}</Typography>
-                                        <Typography variant="caption" sx={{ color: dark.textSecondary, fontSize: '0.6rem' }}>{s.lat.toFixed(4)}, {s.lng.toFixed(4)}</Typography>
-                                    </Box>
-                                ))}
+                        <Box sx={{ textAlign: 'right' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'flex-end', mb: 0.5 }}>
+                                <Box sx={{ width: 8, height: 8, bgcolor: dark.success, borderRadius: '50%', boxShadow: `0 0 10px ${dark.success}` }} />
+                                <Typography variant="caption" sx={{ color: dark.success, fontWeight: 800 }}>LIVE SIGNAL</Typography>
                             </Box>
-                        )}
-
-                        <Box sx={{ mb: 2 }}>
-                            <Typography variant="caption" sx={{ color: dark.success, fontWeight: 800 }}>END POINT</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 800, color: '#fff' }}>{trackedBus.endPoint}</Typography>
-                            {routeDetails?.end && <Typography variant="caption" sx={{ color: dark.textSecondary, fontSize: '0.65rem' }}>{routeDetails.end.lat.toFixed(4)}, {routeDetails.end.lng.toFixed(4)}</Typography>}
-                        </Box>
-
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Box sx={{ width: 8, height: 8, bgcolor: dark.success, borderRadius: '50%', boxShadow: `0 0 10px ${dark.success}` }} />
-                            <Typography variant="caption" sx={{ color: dark.success, fontWeight: 800 }}>LIVE SIGNAL</Typography>
+                            <Typography variant="caption" sx={{ color: dark.textSecondary, display: 'block' }}>Updated: {new Date(trackedBus.lastUpdated).toLocaleTimeString()}</Typography>
                         </Box>
                     </Box>
+
+                    <LinearBusTracker 
+                        routeDetails={routeDetails} 
+                        currentLocation={{lat: trackedBus.latitude, lng: trackedBus.longitude}} 
+                        boardingStopName={enrollment?.assignedStop} 
+                    />
                 </Paper>
             )}
         </Box>

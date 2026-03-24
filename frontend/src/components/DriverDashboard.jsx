@@ -13,6 +13,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import LinearBusTracker from './LinearBusTracker';
 
 const dark = {
     bg: '#050a14',
@@ -69,9 +70,7 @@ const DriverDashboard = () => {
     
     const [galleryItems, setGalleryItems] = useState([]);
 
-    const mapContainerRef = useRef(null);
-    const mapInstanceRef = useRef(null);
-    const markerRef = useRef(null);
+    const [currentLocation, setCurrentLocation] = useState(null);
 
     useEffect(() => {
         const loggedInUser = JSON.parse(localStorage.getItem('user'));
@@ -106,44 +105,9 @@ const DriverDashboard = () => {
         }
     };
 
-    // Initialize Map
+    // Remove Map Initialization - using LinearBusTracker instead
     useEffect(() => {
-        if (typeof window.L === 'undefined' || !mapContainerRef.current) return;
-
-        if (!mapInstanceRef.current) {
-            const L = window.L;
-            const center = [8.5241, 76.9366];
-
-            mapInstanceRef.current = L.map(mapContainerRef.current, {
-                zoomControl: false,
-                attributionControl: false
-            }).setView(center, 15);
-
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                maxZoom: 20
-            }).addTo(mapInstanceRef.current);
-
-            const busIcon = L.divIcon({
-                html: `<div style="background-color: #3366ff; border: 3px solid white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                            <path d="M18,11H6V6h12V11z M16.5,17c0.83,0,1.5-0.67,1.5-1.5S17.33,14,16.5,14S15,14.67,15,15.5S15.67,17,16.5,17z M7.5,17 c0.83,0,1.5-0.67,1.5-1.5S8.33,14,7.5,14S6,14.67,6,15.5S6.67,17,7.5,17z M4,16c0,0.88,0.39,1.67,1,2.22V20c0,0.55,0.45,1,1,1h1 c0.55,0,1-0.45,1-1v-1h8v1c0,0.55,0.45,1,1,1h1c0.55,0,1-0.45,1-1v-1.78c0.61-0.55,1-1.34,1-2.22V6c0-3.5-3.58-4-8-4s-8,0.5-8,4V16z" />
-                        </svg>
-                       </div>`,
-                className: 'custom-bus-marker',
-                iconSize: [40, 40],
-                iconAnchor: [20, 20]
-            });
-
-            markerRef.current = L.marker(center, { icon: busIcon }).addTo(mapInstanceRef.current);
-            markerRef.current.bindTooltip("CURRENT POSITION", {
-                permanent: true,
-                direction: 'top',
-                className: 'dispatch-tooltip',
-                offset: [0, -20]
-            }).openTooltip();
-        }
-
-        // Standard Geocode Hydration for UI and Map
+        // Standard Geocode Hydration for UI and Tracker
         const hydrateCoordinates = async () => {
             if (!user) return;
             
@@ -179,71 +143,7 @@ const DriverDashboard = () => {
         hydrateCoordinates();
     }, [user]);
 
-    // Draw Route and Stops if available
-    useEffect(() => {
-        if (view === 'map' && mapInstanceRef.current && routeDetails?.start && routeDetails?.end) {
-            const drawRoute = async () => {
-                const L = window.L;
-                const routePoints = [
-                    [routeDetails.start.lat, routeDetails.start.lng],
-                    ...routeDetails.stops.map(s => [s.lat, s.lng]),
-                    [routeDetails.end.lat, routeDetails.end.lng]
-                ];
 
-                const roadPath = await fetchRouteGeometry(routePoints);
-
-                if (!mapInstanceRef.current) return;
-
-                // Clear old route layers
-                mapInstanceRef.current.eachLayer((layer) => {
-                    if (
-                        (layer instanceof L.Polyline && !(layer instanceof L.Polygon) && !(layer instanceof L.CircleMarker)) ||
-                        layer instanceof L.CircleMarker
-                    ) {
-                        mapInstanceRef.current.removeLayer(layer);
-                    }
-                });
-
-                // Draw thick black road line
-                const routeLine = L.polyline(roadPath, {
-                    color: '#000000',
-                    weight: 7,
-                    opacity: 1,
-                    lineJoin: 'round',
-                    lineCap: 'round'
-                }).addTo(mapInstanceRef.current);
-
-                // Draw white stop markers
-                const allPoints = [
-                    routeDetails.start,
-                    ...routeDetails.stops,
-                    routeDetails.end
-                ];
-
-                allPoints.forEach((point) => {
-                    const circle = L.circleMarker([point.lat, point.lng], {
-                        radius: 9,
-                        fillColor: '#ffffff',
-                        fillOpacity: 1,
-                        color: '#000000',
-                        weight: 3
-                    }).addTo(mapInstanceRef.current);
-
-                    circle.bindTooltip(`<div style="color:#222;font-weight:800;font-size:13px;text-shadow:0 0 3px white,0 0 3px white;">${point.name}</div>`, {
-                        permanent: true,
-                        direction: 'right',
-                        className: 'stop-label-tooltip',
-                        offset: [15, 0]
-                    });
-                });
-
-                // Fit map
-                mapInstanceRef.current.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
-            };
-
-            drawRoute();
-        }
-    }, [view, routeDetails]);
 
 
     const watchIdRef = useRef(null);
@@ -256,22 +156,14 @@ const DriverDashboard = () => {
 
         // Snap to current location immediately
         navigator.geolocation.getCurrentPosition((pos) => {
-            const newPos = [pos.coords.latitude, pos.coords.longitude];
-            if (markerRef.current && mapInstanceRef.current) {
-                markerRef.current.setLatLng(newPos);
-                mapInstanceRef.current.setView(newPos, 16, { animate: true });
-            }
+            const { latitude, longitude } = pos.coords;
+            setCurrentLocation({ lat: latitude, lng: longitude });
         }, (err) => console.error("Initial snap error:", err));
 
         watchIdRef.current = navigator.geolocation.watchPosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
-                const newPos = [latitude, longitude];
-
-                if (markerRef.current && mapInstanceRef.current) {
-                    markerRef.current.setLatLng(newPos);
-                    mapInstanceRef.current.panTo(newPos, { animate: true });
-                }
+                setCurrentLocation({ lat: latitude, lng: longitude });
 
                 // Sync with backend
                 axios.post(`${import.meta.env.VITE_API_URL}/api/users/update-location`, {
@@ -565,11 +457,8 @@ const DriverDashboard = () => {
             fontFamily: "'Inter', sans-serif",
             color: dark.text
         }}>
-            {/* Map Background */}
-            <Box ref={mapContainerRef} sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }} />
-            
-            {/* Dark Overlay */}
-            <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'radial-gradient(circle, transparent 20%, rgba(5, 10, 20, 0.45) 100%)', pointerEvents: 'none', zIndex: 1 }} />
+            {/* Dark Background */}
+            <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, bgcolor: dark.bg, zIndex: 0 }} />
 
             {/* Sidebar Component */}
             {sidebar}
@@ -601,7 +490,27 @@ const DriverDashboard = () => {
                 </Toolbar>
             </AppBar>
 
-            {/* Floating Info Cards */}
+            {view === 'map' && (
+                <Box sx={{ position: 'absolute', top: 100, left: 0, right: 0, bottom: 0, overflowY: 'auto', p: 3, display: 'flex', justifyContent: 'center' }}>
+                    <Container maxWidth="lg" sx={{ position: 'relative' }}>
+                        <Typography variant="h4" sx={{ fontWeight: 900, mb: 4, color: '#fff', textTransform: 'uppercase' }}>
+                            Live Itinerary Tracker 
+                        </Typography>
+                        
+                        <Paper elevation={24} sx={{ p: 4, borderRadius: '32px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: '0 20px 40px rgba(0,0,0,0.4)', mb: 4 }}>
+                            {/* Instead of the map, show the LinearBusTracker centered */}
+                            <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+                                <LinearBusTracker 
+                                    routeDetails={routeDetails} 
+                                    currentLocation={currentLocation} 
+                                />
+                            </Box>
+                        </Paper>
+                    </Container>
+                </Box>
+            )}
+
+            {/* Floating Info Cards - Only in 'map' view but floating on the side */}
             {isDutyOn && user && view === 'map' && (
                 <Box sx={{ position: 'absolute', top: 100, right: 30, zIndex: 10, width: 300 }}>
                     <Paper elevation={24} sx={{ p: 3, borderRadius: '24px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, backdropFilter: 'blur(15px)' }}>
