@@ -112,57 +112,69 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
     const busProgressPercentage = useMemo(() => {
         const loc = currentLocation;
         if (!loc || !loc.lat || !loc.lng || isNaN(loc.lat) || isNaN(loc.lng)) return null;
-        if (totalStops < 2 || !nearestStopInfo) return null;
+        if (totalStops < 2 || stopsWithCoords.length < 2) return null;
 
-        const nearestIdx = nearestStopInfo.index;
+        // Find nearest stop among those WITH coordinates
+        let minStopDist = Infinity;
+        let nearestInCoordsIdx = -1;
+
+        stopsWithCoords.forEach((stop, idx) => {
+            const d = getDistanceFromLatLonInKm(loc.lat, loc.lng, stop.lat, stop.lng);
+            if (d < minStopDist) {
+                minStopDist = d;
+                nearestInCoordsIdx = idx;
+            }
+        });
+
+        if (nearestInCoordsIdx === -1) return null;
+
+        const currentStop = stopsWithCoords[nearestInCoordsIdx];
+        const prevStop = stopsWithCoords[nearestInCoordsIdx - 1];
+        const nextStop = stopsWithCoords[nearestInCoordsIdx + 1];
+
+        // Original indices in the main allStops array (for Global UI %)
+        const currentGlobalIdx = allStops.findIndex(s => s === currentStop);
         
-        // Find the best segment (i, i+1) the bus is currently traversing
-        // We look at the segment ending at nearestIdx and the one starting at nearestIdx
-        let segmentStartIdx = -1;
-        let segmentEndIdx = -1;
+        let segmentStartGlobalIdx = -1;
         let segmentRatio = 0;
 
-        const prevStop = allStops[nearestIdx - 1];
-        const currentStop = allStops[nearestIdx];
-        const nextStop = allStops[nearestIdx + 1];
-
-        if (nearestIdx === 0) {
-            // Bus is at or before the first stop
-            segmentStartIdx = 0;
-            segmentEndIdx = 1;
-            segmentRatio = 0; // Stick to start
-        } else if (nearestIdx === totalStops - 1) {
-            // Bus is at or past the last stop
-            segmentStartIdx = totalStops - 2;
-            segmentEndIdx = totalStops - 1;
-            segmentRatio = 1; // Stick to end
+        if (nearestInCoordsIdx === 0) {
+            // At first geocoded stop
+            segmentStartGlobalIdx = currentGlobalIdx;
+            const nextGlobalIdx = allStops.findIndex(s => s === nextStop);
+            if (nextStop) {
+                const dSeg = getDistanceFromLatLonInKm(currentStop.lat, currentStop.lng, nextStop.lat, nextStop.lng);
+                const dFromStart = getDistanceFromLatLonInKm(loc.lat, loc.lng, currentStop.lat, currentStop.lng);
+                segmentRatio = dSeg > 0 ? Math.min(0.99, dFromStart / dSeg) : 0;
+            }
+        } else if (nearestInCoordsIdx === stopsWithCoords.length - 1) {
+            // At last geocoded stop
+            const prevGlobalIdx = allStops.findIndex(s => s === prevStop);
+            segmentStartGlobalIdx = prevGlobalIdx;
+            segmentRatio = 1.0;
         } else {
-            // General case: Bus is between (prev, current) or (current, next)
+            // General case
             const dPrev = getDistanceFromLatLonInKm(loc.lat, loc.lng, prevStop.lat, prevStop.lng);
             const dNext = getDistanceFromLatLonInKm(loc.lat, loc.lng, nextStop.lat, nextStop.lng);
             
-            // If bus is significantly closer to next than prev, it's likely moving forward
             if (dNext < dPrev) {
-                // Moving from current towards next
-                segmentStartIdx = nearestIdx;
-                segmentEndIdx = nearestIdx + 1;
+                segmentStartGlobalIdx = currentGlobalIdx;
+                const nextGlobalIdx = allStops.findIndex(s => s === nextStop);
                 const dSeg = getDistanceFromLatLonInKm(currentStop.lat, currentStop.lng, nextStop.lat, nextStop.lng);
                 const dFromStart = getDistanceFromLatLonInKm(loc.lat, loc.lng, currentStop.lat, currentStop.lng);
-                segmentRatio = dSeg > 0 ? Math.min(1, dFromStart / dSeg) : 0;
+                segmentRatio = dSeg > 0 ? (dFromStart / dSeg) * (nextGlobalIdx - currentGlobalIdx) : 0;
             } else {
-                // Still approaching current from prev
-                segmentStartIdx = nearestIdx - 1;
-                segmentEndIdx = nearestIdx;
+                const prevGlobalIdx = allStops.findIndex(s => s === prevStop);
+                segmentStartGlobalIdx = prevGlobalIdx;
                 const dSeg = getDistanceFromLatLonInKm(prevStop.lat, prevStop.lng, currentStop.lat, currentStop.lng);
                 const dFromStart = getDistanceFromLatLonInKm(loc.lat, loc.lng, prevStop.lat, prevStop.lng);
-                segmentRatio = dSeg > 0 ? Math.min(1, dFromStart / dSeg) : 0;
+                segmentRatio = dSeg > 0 ? (dFromStart / dSeg) * (currentGlobalIdx - prevGlobalIdx) : 0;
             }
         }
 
-        // Global UI % = (StartIndex + Ratio) / (Total - 1) * 100
-        const globalProgress = ((segmentStartIdx + segmentRatio) / (totalStops - 1)) * 100;
+        const globalProgress = (segmentStartGlobalIdx + segmentRatio) / (totalStops - 1) * 100;
         return Math.max(0, Math.min(100, globalProgress));
-    }, [currentLocation, totalStops, allStops, nearestStopInfo]);
+    }, [currentLocation, totalStops, allStops, stopsWithCoords]);
 
     // 2. The "Geofence" Logic (Auto-Fill Stops & Index-Based Completion)
     const stopsStatus = useMemo(() => {
