@@ -141,17 +141,19 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
         if (nearestInCoordsIdx === 0) {
             // At first geocoded stop
             segmentStartGlobalIdx = currentGlobalIdx;
-            const nextGlobalIdx = allStops.findIndex(s => s === nextStop);
             if (nextStop) {
+                const nextGlobalIdx = allStops.findIndex(s => s === nextStop);
                 const dSeg = getDistanceFromLatLonInKm(currentStop.lat, currentStop.lng, nextStop.lat, nextStop.lng);
                 const dFromStart = getDistanceFromLatLonInKm(loc.lat, loc.lng, currentStop.lat, currentStop.lng);
-                segmentRatio = dSeg > 0 ? Math.min(0.99, dFromStart / dSeg) : 0;
+                segmentRatio = dSeg > 0 ? (dFromStart / dSeg) * (nextGlobalIdx - currentGlobalIdx) : 0;
             }
         } else if (nearestInCoordsIdx === stopsWithCoords.length - 1) {
             // At last geocoded stop
             const prevGlobalIdx = allStops.findIndex(s => s === prevStop);
             segmentStartGlobalIdx = prevGlobalIdx;
-            segmentRatio = 1.0;
+            const dSeg = getDistanceFromLatLonInKm(prevStop.lat, prevStop.lng, currentStop.lat, currentStop.lng);
+            const dFromPrev = getDistanceFromLatLonInKm(loc.lat, loc.lng, prevStop.lat, prevStop.lng);
+            segmentRatio = dSeg > 0 ? (dFromPrev / dSeg) * (currentGlobalIdx - prevGlobalIdx) : (currentGlobalIdx - prevGlobalIdx);
         } else {
             // General case
             const dPrev = getDistanceFromLatLonInKm(loc.lat, loc.lng, prevStop.lat, prevStop.lng);

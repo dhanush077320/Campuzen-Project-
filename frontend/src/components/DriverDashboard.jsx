@@ -183,6 +183,7 @@ const DriverDashboard = () => {
                 // Sync with backend
                 const currentUser = activeUserRef.current || user;
                 if (currentUser && currentUser.username) {
+                    console.log("GPS Sync:", latitude, longitude);
                     axios.post(`${import.meta.env.VITE_API_URL}/api/users/update-location`, {
                         username: currentUser.username,
                         latitude,
@@ -201,8 +202,8 @@ const DriverDashboard = () => {
                     console.warn("Location request timed out. Retrying...");
                 }
             },
-            // Increased timeout and maximumAge for better stability on mobile
-            { enableHighAccuracy: true, maximumAge: 15000, timeout: 15000 }
+            // Reverted to more aggressive/standard settings for live tracking
+            { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
         );
     };
 
