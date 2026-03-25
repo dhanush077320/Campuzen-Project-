@@ -66,13 +66,20 @@ const UnifiedLogin = () => {
                 {!isMobile && (
                     <Grid item md={6} sx={{ 
                         position: 'relative',
-                        backgroundImage: `linear-gradient(rgba(10, 15, 29, 0.4), rgba(10, 15, 29, 0.6)), url("${CampusBg}")`,
+                        backgroundImage: `linear-gradient(rgba(5, 10, 20, 0.75), rgba(5, 10, 20, 0.9)), url("${CampusBg}")`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
-                        p: 8
+                        p: 8,
+                        '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            background: 'radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15), transparent 50%)',
+                            pointerEvents: 'none'
+                        }
                     }}>
                         {/* Logo & Header */}
                         <Box>
@@ -169,12 +176,12 @@ const UnifiedLogin = () => {
                                             '& .MuiSelect-select': { py: 2 }
                                         }}
                                     >
-                                        <MenuItem value="student">Student Account</MenuItem>
-                                        <MenuItem value="teacher">Teacher Account</MenuItem>
+                                        <MenuItem value="student">Student</MenuItem>
+                                        <MenuItem value="teacher">Teacher</MenuItem>
                                         <MenuItem value="college">College Admin</MenuItem>
-                                        <MenuItem value="parent">Parent Portal</MenuItem>
-                                        <MenuItem value="staff">Staff Member</MenuItem>
-                                        <MenuItem value="driver">Fleet Driver</MenuItem>
+                                        <MenuItem value="parent">Parent</MenuItem>
+                                        <MenuItem value="staff">Staff</MenuItem>
+                                        <MenuItem value="driver">Driver</MenuItem>
                                     </Select>
                                 </Box>
 
@@ -185,7 +192,6 @@ const UnifiedLogin = () => {
                                     </Typography>
                                     <TextField
                                         fullWidth
-                                        placeholder="admin"
                                         value={id}
                                         onChange={(e) => setId(e.target.value)}
                                         required
@@ -212,7 +218,6 @@ const UnifiedLogin = () => {
                                     <TextField
                                         fullWidth
                                         type="password"
-                                        placeholder="••••••••"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
