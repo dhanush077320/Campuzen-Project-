@@ -43,13 +43,17 @@ const DriverDashboard = () => {
     const geocodeAddress = async (address) => {
         if (!address) return null;
         try {
-            // Append region to search query to avoid results from other states/countries
-            const searchQuery = `${address}, Kerala, India`;
-            const res = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`, {
+            // Append region and restrict to India (countrycodes=in) and Kerala viewbox
+            const searchQuery = `${address}, Kerala`;
+            // Bounding box for Kerala (standardized)
+            const viewbox = '76.3,8.2,77.3,9.5'; 
+            const res = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=in&viewbox=${viewbox}&bounded=1`, {
                 headers: { 'Accept-Language': 'en' }
             });
             if (res.data && res.data.length > 0) {
-                return { lat: parseFloat(res.data[0].lat), lng: parseFloat(res.data[0].lon), name: address };
+                const lat = parseFloat(res.data[0].lat);
+                const lng = parseFloat(res.data[0].lon);
+                return { lat, lng, name: address };
             }
         } catch (e) { console.error('Geocode error:', e); }
         return null;
@@ -122,14 +126,33 @@ const DriverDashboard = () => {
             let end = user.endPointCoords;
             let stops = user.stopCoords || [];
 
+            // Preliminary validation of existing coordinates
+            if (start && end) {
+                stops = stops.filter(s => {
+                    const d = getDistanceFromLatLonInKm(s.lat, s.lng, start.lat, start.lng);
+                    return d < 50; // Keep only if within 50km of start
+                });
+            }
+
             if (!start && user.startingPoint) start = await geocodeAddress(user.startingPoint);
             if (!end && user.endPoint) end = await geocodeAddress(user.endPoint);
 
             if ((!stops || stops.length === 0) && user.stops?.length > 0) {
+                console.log("Forcing re-geocoding for stops due to missing or invalid data...");
                 const geocoded = await Promise.all(
                     user.stops.filter(s => s && s.trim()).map(async (s) => {
                         const c = await geocodeAddress(s);
-                        return c ? { ...c, name: s } : null;
+                        if (!c) return null;
+                        
+                        // Distance Filter: Discard if more than 50km from start (likely wrong state)
+                        if (start) {
+                            const d = getDistanceFromLatLonInKm(c.lat, c.lng, start.lat, start.lng);
+                            if (d > 50) {
+                                console.warn(`Discarding geocoded stop ${s}: Too far from start (${Math.round(d)}km)`);
+                                return null;
+                            }
+                        }
+                        return { ...c, name: s };
                     })
                 );
                 stops = geocoded.filter(Boolean);
