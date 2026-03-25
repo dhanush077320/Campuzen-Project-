@@ -15,8 +15,8 @@ import Logo from '../assets/logo2.png';
 import CampusBg from '../assets/campus_login_bg.png';
 
 const dark = {
-    bg: '#050a14',
-    formBg: '#050a14',
+    bg: '#020508',
+    formBg: '#020508',
     accent: '#6366f1', // Indigo/Purple accent from design
     text: '#ffffff',
     textSecondary: '#94a3b8',
