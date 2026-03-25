@@ -146,6 +146,11 @@ const DriverDashboard = () => {
 
 
 
+    const activeUserRef = useRef(null);
+    useEffect(() => {
+        activeUserRef.current = user;
+    }, [user]);
+
     const watchIdRef = useRef(null);
 
     const startTracking = () => {
@@ -158,6 +163,16 @@ const DriverDashboard = () => {
         navigator.geolocation.getCurrentPosition((pos) => {
             const { latitude, longitude } = pos.coords;
             setCurrentLocation({ lat: latitude, lng: longitude });
+            // Sync immediately so others see the bus online right away
+            const currentUser = activeUserRef.current || user;
+            if (currentUser && currentUser.username) {
+                axios.post(`${import.meta.env.VITE_API_URL}/api/users/update-location`, {
+                    username: currentUser.username,
+                    latitude,
+                    longitude,
+                    isOnline: true
+                }).catch(err => console.error("Initial sync error:", err));
+            }
         }, (err) => console.error("Initial snap error:", err));
 
         watchIdRef.current = navigator.geolocation.watchPosition(
@@ -166,18 +181,28 @@ const DriverDashboard = () => {
                 setCurrentLocation({ lat: latitude, lng: longitude });
 
                 // Sync with backend
-                axios.post(`${import.meta.env.VITE_API_URL}/api/users/update-location`, {
-                    username: user.username,
-                    latitude,
-                    longitude,
-                    isOnline: true
-                }).catch(err => console.error("Sync error:", err));
+                const currentUser = activeUserRef.current || user;
+                if (currentUser && currentUser.username) {
+                    axios.post(`${import.meta.env.VITE_API_URL}/api/users/update-location`, {
+                        username: currentUser.username,
+                        latitude,
+                        longitude,
+                        isOnline: true
+                    }).catch(err => console.error("Sync error:", err));
+                }
             },
             (error) => {
                 console.error('Geolocation error:', error);
-                if (error.code === 1) alert("Please allow location access to use Duty Mode.");
+                if (error.code === 1) {
+                    alert("Please allow location access to use Duty Mode.");
+                } else if (error.code === 2) {
+                    console.warn("Location unavailable right now.");
+                } else if (error.code === 3) {
+                    console.warn("Location request timed out. Retrying...");
+                }
             },
-            { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+            // Increased timeout and maximumAge for better stability on mobile
+            { enableHighAccuracy: true, maximumAge: 15000, timeout: 15000 }
         );
     };
 
@@ -186,10 +211,11 @@ const DriverDashboard = () => {
             navigator.geolocation.clearWatch(watchIdRef.current);
             watchIdRef.current = null;
         }
-        // Mark as offline
-        if (user) {
+        // Mark as offline using the latest user from ref
+        const currentUser = activeUserRef.current || user;
+        if (currentUser && currentUser.username) {
             axios.post(`${import.meta.env.VITE_API_URL}/api/users/update-location`, {
-                username: user.username,
+                username: currentUser.username,
                 isOnline: false
             }).catch(err => console.error("Offline sync error:", err));
         }
