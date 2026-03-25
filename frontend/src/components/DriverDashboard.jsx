@@ -539,31 +539,33 @@ const DriverDashboard = () => {
                         </Box>
 
                         {/* Mobile view info card (Moved inside the flow for mobile) */}
-                        <Box sx={{ display: { xs: 'block', md: 'none' }, mb: 4 }}>
-                            {/* Render the sidebar content here for mobile */}
-                            <Paper elevation={24} sx={{ 
-                                p: 3, 
-                                borderRadius: '24px', 
-                                bgcolor: 'rgba(15, 23, 42, 0.95)', 
-                                border: `1px solid ${dark.border}`, 
-                                backdropFilter: 'blur(15px)'
-                            }}>
-                                <Typography variant="overline" sx={{ color: dark.accent, fontWeight: 900, letterSpacing: '2px' }}>LIVE ITINERARY</Typography>
-                                <Divider sx={{ my: 1.5, borderColor: dark.border }} />
-                                <Box sx={{ mb: 2 }}>
-                                    <Typography variant="caption" sx={{ color: dark.accent, fontWeight: 800, display: 'block' }}>STARTING POINT</Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.startingPoint || 'NOT SET'}</Typography>
-                                </Box>
-                                <Box sx={{ mb: 2 }}>
-                                    <Typography variant="caption" sx={{ color: '#ff9800', fontWeight: 800, display: 'block' }}>NEXT DESTINATION</Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.nextDestination || 'NOT SET'}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" sx={{ color: dark.success, fontWeight: 800, display: 'block' }}>END POINT</Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.endPoint || 'NOT SET'}</Typography>
-                                </Box>
-                            </Paper>
-                        </Box>
+                        {isDutyOn && user && (
+                            <Box sx={{ display: { xs: 'block', md: 'none' }, mb: 4 }}>
+                                {/* Render the sidebar content here for mobile */}
+                                <Paper elevation={24} sx={{ 
+                                    p: 3, 
+                                    borderRadius: '24px', 
+                                    bgcolor: 'rgba(15, 23, 42, 0.95)', 
+                                    border: `1px solid ${dark.border}`, 
+                                    backdropFilter: 'blur(15px)'
+                                }}>
+                                    <Typography variant="overline" sx={{ color: dark.accent, fontWeight: 900, letterSpacing: '2px' }}>LIVE ITINERARY</Typography>
+                                    <Divider sx={{ my: 1.5, borderColor: dark.border }} />
+                                    <Box sx={{ mb: 2 }}>
+                                        <Typography variant="caption" sx={{ color: dark.accent, fontWeight: 800, display: 'block' }}>STARTING POINT</Typography>
+                                        <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.startingPoint || 'NOT SET'}</Typography>
+                                    </Box>
+                                    <Box sx={{ mb: 2 }}>
+                                        <Typography variant="caption" sx={{ color: '#ff9800', fontWeight: 800, display: 'block' }}>NEXT DESTINATION</Typography>
+                                        <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.nextDestination || 'NOT SET'}</Typography>
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="caption" sx={{ color: dark.success, fontWeight: 800, display: 'block' }}>END POINT</Typography>
+                                        <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.endPoint || 'NOT SET'}</Typography>
+                                    </Box>
+                                </Paper>
+                            </Box>
+                        )}
                         
                         <Box sx={{ height: { xs: 100, md: 200 } }} /> 
                     </Container>
