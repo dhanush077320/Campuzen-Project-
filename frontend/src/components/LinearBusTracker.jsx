@@ -174,9 +174,15 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
             }
         }
 
-        const globalProgress = (segmentStartGlobalIdx + segmentRatio) / (totalStops - 1) * 100;
-        return Math.max(0, Math.min(100, globalProgress));
-    }, [currentLocation, totalStops, allStops, stopsWithCoords]);
+        const calculatedProgress = (segmentStartGlobalIdx + segmentRatio) / (totalStops - 1) * 100;
+        
+        // AUTO-FILL BYPASS: If we have a nearest stop, don't let the progress line be behind it.
+        // This ensures that if the driver starts GPS late, the line is instantly shaded up to the current stop.
+        const nearestIdx = nearestStopInfo?.index || 0;
+        const nearestStopProgress = (nearestIdx / (totalStops - 1)) * 100;
+
+        return Math.max(0, Math.min(100, Math.max(calculatedProgress, nearestStopProgress)));
+    }, [currentLocation, totalStops, allStops, stopsWithCoords, nearestStopInfo]);
 
     // 2. The "Geofence" Logic (Auto-Fill Stops & Index-Based Completion)
     const stopsStatus = useMemo(() => {
