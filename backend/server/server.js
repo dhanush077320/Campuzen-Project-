@@ -28,6 +28,11 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+// --- Health Check Route ---
+app.get('/', (req, res) => {
+    res.status(200).send('🚀 CampuZen API is online and healthy.');
+});
+
 // --- Authentication Routes ---
 
 // Real Login Route
