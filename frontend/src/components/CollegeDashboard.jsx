@@ -24,7 +24,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 const drawerWidth = 240;
 
 const dark = {
-    bg: '#0a0e1a',
+    bg: '#020508',
     sidebar: '#0f1425',
     surface: '#151a2e',
     surfaceHover: '#1c2240',
@@ -872,7 +872,13 @@ const CollegeDashboard = () => {
             </Paper>
 
             <Typography variant="h6" sx={{ mb: 3, color: dark.text }}>Payment History</Typography>
-            <TableContainer component={Paper} sx={{ borderRadius: '24px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: 'none' }}>
+            <TableContainer component={Paper} sx={{ 
+                borderRadius: '24px', 
+                bgcolor: dark.surface, 
+                border: `1px solid ${dark.border}`, 
+                boxShadow: 'none',
+                overflowX: 'auto'
+            }}>
                 <Table>
                     <TableHead>
                         <TableRow sx={{ '& th': { borderColor: dark.border, color: dark.textSecondary, fontWeight: 700 } }}>
@@ -1194,7 +1200,13 @@ const CollegeDashboard = () => {
                 </Grid>
             </Paper>
 
-            <TableContainer component={Paper} sx={{ borderRadius: '24px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: 'none' }}>
+            <TableContainer component={Paper} sx={{ 
+                borderRadius: '24px', 
+                bgcolor: dark.surface, 
+                border: `1px solid ${dark.border}`, 
+                boxShadow: 'none',
+                overflowX: 'auto'
+            }}>
                 <Table>
                     <TableHead>
                         <TableRow sx={{ '& th': { borderColor: dark.border, color: dark.textSecondary, fontWeight: 700 } }}>
@@ -1756,7 +1768,13 @@ const CollegeDashboard = () => {
             <Typography variant="h4" sx={{ fontWeight: 800, mb: 4, color: dark.accent }}>
                 {title}
             </Typography>
-            <TableContainer component={Paper} sx={{ borderRadius: '16px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: 'none' }}>
+            <TableContainer component={Paper} sx={{ 
+                borderRadius: '16px', 
+                bgcolor: dark.surface, 
+                border: `1px solid ${dark.border}`, 
+                boxShadow: 'none',
+                overflowX: 'auto'
+            }}>
                 <Table>
                     <TableHead>
                         <TableRow sx={{ '& th': { borderColor: dark.border } }}>
@@ -1851,7 +1869,13 @@ const CollegeDashboard = () => {
                     Refresh
                 </Button>
             </Box>
-            <TableContainer component={Paper} sx={{ borderRadius: '16px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: 'none' }}>
+            <TableContainer component={Paper} sx={{ 
+                borderRadius: '16px', 
+                bgcolor: dark.surface, 
+                border: `1px solid ${dark.border}`, 
+                boxShadow: 'none',
+                overflowX: 'auto'
+            }}>
                 <Table>
                     <TableHead>
                         <TableRow sx={{ '& th': { borderColor: dark.border } }}>

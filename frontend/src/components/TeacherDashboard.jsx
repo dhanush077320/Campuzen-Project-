@@ -21,7 +21,7 @@ const drawerWidth = 240;
 
 // Dark theme palette
 const dark = {
-    bg: '#0a0e1a',
+    bg: '#020508',
     sidebar: '#0f1425',
     surface: '#151a2e',
     surfaceHover: '#1c2240',
@@ -421,7 +421,13 @@ const TeacherDashboard = () => {
                 </Grid>
 
                 {ownAttendanceRecords.length > 0 ? (
-                    <TableContainer component={Paper} sx={{ borderRadius: '24px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: 'none' }}>
+                    <TableContainer component={Paper} sx={{ 
+                        borderRadius: '24px', 
+                        bgcolor: dark.surface, 
+                        border: `1px solid ${dark.border}`, 
+                        boxShadow: 'none',
+                        overflowX: 'auto'
+                    }}>
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ '& th': { borderColor: dark.border, color: dark.textSecondary, fontWeight: 700 } }}>
@@ -583,7 +589,13 @@ const TeacherDashboard = () => {
             </Paper>
 
             {students.length > 0 && (
-                <TableContainer component={Paper} sx={{ borderRadius: '24px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: 'none' }}>
+                <TableContainer component={Paper} sx={{ 
+                    borderRadius: '24px', 
+                    bgcolor: dark.surface, 
+                    border: `1px solid ${dark.border}`, 
+                    boxShadow: 'none',
+                    overflowX: 'auto'
+                }}>
                     <Table>
                         <TableHead>
                             <TableRow sx={{ '& th': { borderColor: dark.border } }}>
@@ -736,7 +748,13 @@ const TeacherDashboard = () => {
             </Paper>
 
             {students.length > 0 && (
-                <TableContainer component={Paper} sx={{ borderRadius: '24px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: 'none' }}>
+                <TableContainer component={Paper} sx={{ 
+                    borderRadius: '24px', 
+                    bgcolor: dark.surface, 
+                    border: `1px solid ${dark.border}`, 
+                    boxShadow: 'none',
+                    overflowX: 'auto'
+                }}>
                     <Table>
                         <TableHead>
                             <TableRow sx={{ '& th': { borderColor: dark.border } }}>

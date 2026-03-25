@@ -21,7 +21,7 @@ import LinearBusTracker from './LinearBusTracker';
 const drawerWidth = 240;
 
 const dark = {
-    bg: '#0a0e1a',
+    bg: '#020508',
     sidebar: '#0f1425',
     surface: '#151a2e',
     surfaceHover: '#1c2240',
@@ -364,7 +364,14 @@ const ParentDashboard = () => {
                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: dark.text, mt: 4 }}>
                             Subject-wise Attendance Analysis
                         </Typography>
-                        <TableContainer component={Paper} sx={{ borderRadius: '24px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: 'none', mb: 6 }}>
+                        <TableContainer component={Paper} sx={{ 
+                            borderRadius: '24px', 
+                            bgcolor: dark.surface, 
+                            border: `1px solid ${dark.border}`, 
+                            boxShadow: 'none', 
+                            mb: 6,
+                            overflowX: 'auto'
+                        }}>
                             <Table>
                                 <TableHead>
                                     <TableRow sx={{ '& th': { borderColor: dark.border, color: dark.textSecondary, fontWeight: 700 } }}>
@@ -416,7 +423,13 @@ const ParentDashboard = () => {
                         <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: dark.text }}>
                             Daily Hourly Log
                         </Typography>
-                        <TableContainer component={Paper} sx={{ borderRadius: '24px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: 'none' }}>
+                        <TableContainer component={Paper} sx={{ 
+                            borderRadius: '24px', 
+                            bgcolor: dark.surface, 
+                            border: `1px solid ${dark.border}`, 
+                            boxShadow: 'none',
+                            overflowX: 'auto'
+                        }}>
                             <Table>
                                 <TableHead>
                                     <TableRow sx={{ '& th': { borderColor: dark.border, color: dark.textSecondary, fontWeight: 700 } }}>
@@ -478,7 +491,13 @@ const ParentDashboard = () => {
             </Typography>
 
             {internalMarks.length > 0 ? (
-                <TableContainer component={Paper} sx={{ borderRadius: '24px', bgcolor: dark.surface, border: `1px solid ${dark.border}`, boxShadow: 'none' }}>
+                <TableContainer component={Paper} sx={{ 
+                    borderRadius: '24px', 
+                    bgcolor: dark.surface, 
+                    border: `1px solid ${dark.border}`, 
+                    boxShadow: 'none',
+                    overflowX: 'auto'
+                }}>
                     <Table>
                         <TableHead>
                             <TableRow sx={{ '& th': { borderColor: dark.border, color: dark.textSecondary, fontWeight: 700 } }}>
