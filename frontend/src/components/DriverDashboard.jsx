@@ -159,9 +159,9 @@ const DriverDashboard = () => {
             return;
         }
 
-        // Snap to current location immediately
         navigator.geolocation.getCurrentPosition((pos) => {
             const { latitude, longitude } = pos.coords;
+            console.log("GPS Initial Capture:", latitude, longitude);
             setCurrentLocation({ lat: latitude, lng: longitude });
             // Sync immediately so others see the bus online right away
             const currentUser = activeUserRef.current || user;
@@ -178,6 +178,7 @@ const DriverDashboard = () => {
         watchIdRef.current = navigator.geolocation.watchPosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
+                console.log("GPS Live Update:", latitude, longitude);
                 setCurrentLocation({ lat: latitude, lng: longitude });
 
                 // Sync with backend

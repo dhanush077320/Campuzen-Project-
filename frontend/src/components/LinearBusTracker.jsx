@@ -15,6 +15,7 @@ const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
 };
 
 const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, trackedBus }) => {
+    console.log("LinearBusTracker Recv Location:", currentLocation);
     // Build allStops — prefer geocoded routeDetails, fallback to raw stop names
     const allStops = useMemo(() => {
         const result = [];
