@@ -84,7 +84,7 @@ const UnifiedLogin = () => {
                         {/* Logo & Header */}
                         <Box>
                             <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 8 }}>
-                                <img src={Logo} alt="Logo" style={{ height: '40px' }} />
+                                <img src={Logo} alt="Logo" style={{ height: '50px' }} />
                                 <Typography variant="h5" sx={{ color: 'white', fontWeight: 900, letterSpacing: '1px' }}>
                                     CampuZen
                                 </Typography>
