@@ -185,6 +185,22 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
         return Math.max(0, Math.min(100, Math.max(calculatedProgress, nearestStopProgress)));
     }, [currentLocation, totalStops, allStops, stopsWithCoords, nearestStopInfo]);
 
+    // Persistent Reached Indices (Sticky Status)
+    const [reachedIndices, setReachedIndices] = React.useState(new Set());
+
+    React.useEffect(() => {
+        if (nearestStopInfo && nearestStopInfo.index !== -1) {
+            setReachedIndices(prev => {
+                const next = new Set(prev);
+                // Mark everything up to the nearest index as reached
+                for (let i = 0; i <= nearestStopInfo.index; i++) {
+                    next.add(i);
+                }
+                return next;
+            });
+        }
+    }, [nearestStopInfo]);
+
     // 2. The "Geofence" Logic (Auto-Fill Stops & Index-Based Completion)
     const stopsStatus = useMemo(() => {
         // Find nearest stop for Index-Based Completion
@@ -194,20 +210,23 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
             const stopProgressPct = (idx / (totalStops - 1)) * 100;
             
             // "Fill-Behind" Rule: Automatically mark all stops BEFORE nearest index as reached
-            let isReached = false;
+            // Now backed by persistent "reachedIndices" state
+            let isReached = reachedIndices.has(idx);
             
-            if (nearestIdx !== -1 && idx < nearestIdx) {
-                isReached = true;
-            } else if (busProgressPercentage !== null && busProgressPercentage >= stopProgressPct) {
-                isReached = true;
-            } else if (currentLocation?.lat != null && stop.lat != null) {
-                const dist = getDistanceFromLatLonInKm(currentLocation.lat, currentLocation.lng, stop.lat, stop.lng);
-                if (dist < 0.1) isReached = true; 
+            if (!isReached) {
+                if (nearestIdx !== -1 && idx < nearestIdx) {
+                    isReached = true;
+                } else if (busProgressPercentage !== null && busProgressPercentage >= stopProgressPct) {
+                    isReached = true;
+                } else if (currentLocation?.lat != null && stop.lat != null) {
+                    const dist = getDistanceFromLatLonInKm(currentLocation.lat, currentLocation.lng, stop.lat, stop.lng);
+                    if (dist < 0.1) isReached = true; 
+                }
             }
             
             return { ...stop, isReached };
         });
-    }, [allStops, busProgressPercentage, currentLocation, totalStops, nearestStopInfo]);
+    }, [allStops, busProgressPercentage, currentLocation, totalStops, nearestStopInfo, reachedIndices]);
 
     // Active Target: The index of the next stop the bus is looking for
     const targetStopIndex = useMemo(() => {
@@ -265,7 +284,8 @@ const LinearBusTracker = ({ routeDetails, currentLocation, boardingStopName, tra
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: currentLocation?.lat ? '#00d68f' : '#666', boxShadow: currentLocation?.lat ? '0 0 8px #00d68f' : 'none' }} />
                     <Typography variant="caption" sx={{ color: '#555', fontWeight: 700 }}>
-                        Bus GPS: {currentLocation?.lat != null ? `${currentLocation.lat.toFixed(5)}, ${currentLocation.lng.toFixed(5)}` : 'Searching...'}
+                        Bus GPS: {currentLocation?.lat != null ? `${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)}` : 'Searching...'}
+                        {` (Stops with GPS: ${stopsWithCoords.length}/${totalStops})`}
                     </Typography>
                 </Box>
                 

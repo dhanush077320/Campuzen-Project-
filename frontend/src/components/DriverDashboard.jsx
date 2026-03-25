@@ -131,6 +131,7 @@ const DriverDashboard = () => {
                     })
                 );
                 stops = geocoded.filter(Boolean);
+                console.log(`Geocoding Complete: Successfully geocoded ${stops.length} out of ${user.stops.length} stops.`);
             }
 
             setRouteDetails({
