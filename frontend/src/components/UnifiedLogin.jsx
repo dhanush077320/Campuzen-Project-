@@ -1,17 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box, TextField, Paper, Button, MenuItem, Select, InputLabel,
-    FormControl, Typography, AppBar, Toolbar, Container, Grid,
-    Fade, CircularProgress, InputAdornment
+    Box, TextField, Button, MenuItem, Select,
+    Typography, Grid, Fade, CircularProgress, 
+    InputAdornment, Stack, useMediaQuery, useTheme
 } from '@mui/material';
 import {
     AccountCircle, Lock, Login as LoginIcon,
-    ChevronRight, School
+    ArrowForward, VerifiedUser, Speed, Security,
+    Groups
 } from '@mui/icons-material';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import BackgroundImage from '../assets/student.png';
 import Logo from '../assets/logo2.png';
+import CampusBg from '../assets/campus_login_bg.png';
+
+const dark = {
+    bg: '#050a14',
+    formBg: '#0a0f1d',
+    accent: '#6366f1', // Indigo/Purple accent from design
+    text: '#ffffff',
+    textSecondary: '#94a3b8',
+    inputBg: 'rgba(15, 23, 42, 0.6)',
+    border: 'rgba(255,255,255,0.08)'
+};
 
 const UnifiedLogin = () => {
     const [role, setRole] = useState('student');
@@ -20,8 +31,9 @@ const UnifiedLogin = () => {
     const [loading, setLoading] = useState(false);
     const [slowMessage, setSlowMessage] = useState(false);
     const navigate = useNavigate();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-    // Pre-warm the Render server as soon as the login page loads
     useEffect(() => {
         fetch(`${import.meta.env.VITE_API_URL}/`).catch(() => {});
     }, []);
@@ -48,178 +60,218 @@ const UnifiedLogin = () => {
     };
 
     return (
-        <Box sx={{
-            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url(${BackgroundImage})`,
-            minHeight: '100vh',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed',
-            display: 'flex',
-            flexDirection: 'column'
-        }}>
-            {/* --- NAVBAR --- */}
-            <AppBar position="static" sx={{ backgroundColor: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(10px)', elevation: 0 }}>
-                <Toolbar sx={{ justifyContent: 'space-between', height: '80px', px: { md: 8 } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <img src={Logo} alt="Logo" style={{ height: '60px', filter: 'brightness(1.2)' }} />
-                        <Typography variant="h5" sx={{ color: 'white', fontWeight: '800', fontFamily: '"Times New Roman", serif', letterSpacing: '2px' }}>
-                            CampuZen
-                        </Typography>
-                    </Box>
-                    <Button color="inherit" sx={{ fontWeight: 'bold', fontFamily: '"Times New Roman", serif', borderBottom: '2px solid #3017d1' }}>
-                        Home
-                    </Button>
-                </Toolbar>
-            </AppBar>
-
-            <Container maxWidth="xl" sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', py: 5 }}>
-                <Grid container spacing={2} sx={{ alignItems: 'center' }}>
-
-                    <Grid size={{ xs: 12, md: 7 }} sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-                        <Fade in timeout={1000}>
-                            <Box>
-                                <Typography variant="h1" sx={{
-                                    color: 'white', fontWeight: '900',
-                                    fontSize: { xs: '3rem', md: '4.5rem' },
-                                    textShadow: '0 4px 20px rgba(0,0,0,0.4)',
-                                    mb: 2
-                                }}>
-                                    Smart Campus <br />
-                                    <span style={{ color: '#4dabf5' }}>Simplified.</span>
+        <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: dark.bg }}>
+            <Grid container>
+                {/* --- Left Pane: Campus Visuals (Hidden on Mobile) --- */}
+                {!isMobile && (
+                    <Grid item md={6} sx={{ 
+                        position: 'relative',
+                        backgroundImage: `linear-gradient(rgba(10, 15, 29, 0.4), rgba(10, 15, 29, 0.6)), url("${CampusBg}")`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        p: 8
+                    }}>
+                        {/* Logo & Header */}
+                        <Box>
+                            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 8 }}>
+                                <img src={Logo} alt="Logo" style={{ height: '40px' }} />
+                                <Typography variant="h5" sx={{ color: 'white', fontWeight: 900, letterSpacing: '1px' }}>
+                                    CampuZen
                                 </Typography>
-                                <Typography variant="h5" sx={{ color: 'rgba(255,255,255,0.8)', maxWidth: '500px', lineHeight: 1.6 }}>
-                                    Your all-in-one portal for academic tracking,
-                                    attendance, and institutional communication.
-                                </Typography>
-                            </Box>
-                        </Fade>
-                    </Grid>
+                            </Stack>
 
-                    <Grid size={{ xs: 12, md: 5 }} sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-end' } }}>
-                        <Fade in timeout={1500}>
-                            <Paper elevation={0} sx={{
-                                p: { xs: 4, md: 6 },
-                                borderRadius: '24px',
-                                width: '100%',
-                                maxWidth: '460px',
-                                backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                                backdropFilter: 'blur(20px) saturate(180%)',
-                                border: '1px solid rgba(255, 255, 255, 0.2)',
-                                boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
-                                textAlign: 'center'
-                            }}>
-                                <Typography variant="h4" sx={{
-                                    fontWeight: '700', mb: 1, color: 'white',
-                                    textShadow: '0 2px 10px rgba(0,0,0,0.2)'
-                                }}>
-                                    CampuZen Login
-                                </Typography>
-                                <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', mb: 4 }}>
-                                    Sign in to access your dashboard
-                                </Typography>
-
-                                <Box component="form" method="POST" id="unified-login-form" onSubmit={handleLogin} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-
-                                    <FormControl fullWidth variant="filled" sx={{
-                                        backgroundColor: 'rgba(255,255,255,0.1)',
-                                        borderRadius: '12px',
-                                        '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                                        '& .MuiInputBase-root': { color: 'white' }
+                            <Fade in timeout={1000}>
+                                <Box>
+                                    <Typography variant="h1" sx={{ 
+                                        color: 'white', 
+                                        fontWeight: 900, 
+                                        fontSize: '4.5rem', 
+                                        lineHeight: 1.1,
+                                        mb: 3
                                     }}>
-                                        <InputLabel>Login Role</InputLabel>
-                                        <Select
-                                            value={role}
-                                            label="Login Role"
-                                            name="role"
-                                            id="role-select"
-                                            onChange={(e) => setRole(e.target.value)}
-                                            disableUnderline
-                                            sx={{ textAlign: 'left' }}
-                                        >
-                                            <MenuItem value="student">Student</MenuItem>
-                                            <MenuItem value="teacher">Teacher</MenuItem>
-                                            <MenuItem value="college">College</MenuItem>
-                                            <MenuItem value="parent">Parent</MenuItem>
-                                            <MenuItem value="staff">Staff</MenuItem>
-                                            <MenuItem value="driver">Driver</MenuItem>
-                                        </Select>
-                                    </FormControl>
+                                        Smart Campus.<br />
+                                        <span style={{ color: '#818cf8', opacity: 0.9 }}>Fully Reimagined.</span>
+                                    </Typography>
+                                    <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '1.1rem', maxWidth: '500px', lineHeight: 1.6 }}>
+                                        The next generation of educational management. Seamless tracking, 
+                                        instant communication, and secure data forensics—all in one place.
+                                    </Typography>
+                                </Box>
+                            </Fade>
+                        </Box>
 
-                                    <TextField
-                                        label="Identification ID"
-                                        variant="filled"
+                        {/* Features Footer */}
+                        <Stack direction="row" spacing={6}>
+                            <Box>
+                                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+                                    <VerifiedUser sx={{ color: '#818cf8', fontSize: 20 }} />
+                                    <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '0.9rem' }}>Certified Access</Typography>
+                                </Stack>
+                                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>Enterprise-grade security</Typography>
+                            </Box>
+                            <Box>
+                                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+                                    <Speed sx={{ color: '#818cf8', fontSize: 20 }} />
+                                    <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '0.9rem' }}>Ultra-Fast</Typography>
+                                </Stack>
+                                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>Real-time synchronization</Typography>
+                            </Box>
+                            <Box>
+                                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+                                    <Security sx={{ color: '#818cf8', fontSize: 20 }} />
+                                    <Typography sx={{ color: 'white', fontWeight: 800, fontSize: '0.9rem' }}>End-to-End</Typography>
+                                </Stack>
+                                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>Data privacy guaranteed</Typography>
+                            </Box>
+                        </Stack>
+                    </Grid>
+                )}
+
+                {/* --- Right Pane: Login Form --- */}
+                <Grid item xs={12} md={6} sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    bgcolor: dark.formBg,
+                    p: 4
+                }}>
+                    <Fade in timeout={1500}>
+                        <Box sx={{ width: '100%', maxWidth: '420px', textAlign: 'center' }}>
+                            <Typography variant="h3" sx={{ color: 'white', fontWeight: 900, mb: 1.5 }}>
+                                Welcome Back
+                            </Typography>
+                            <Typography sx={{ color: dark.textSecondary, mb: 6 }}>
+                                Access your personalized dashboard below.
+                            </Typography>
+
+                            <Box component="form" onSubmit={handleLogin} sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                
+                                {/* User Perspective / Role Select */}
+                                <Box sx={{ textAlign: 'left' }}>
+                                    <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 700, ml: 1, mb: 1, display: 'block', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                        User Perspective
+                                    </Typography>
+                                    <Select
                                         fullWidth
-                                        id="id"
-                                        name="id"
-                                        autoComplete="username"
-                                        value={id}
-                                        required
-                                        onChange={(e) => setId(e.target.value)}
-                                        slotProps={{
-                                            input: {
-                                                disableUnderline: true,
-                                                startAdornment: <InputAdornment position="start"><AccountCircle sx={{ color: 'white' }} /></InputAdornment>,
-                                                sx: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', color: 'white' }
-                                            },
-                                            inputLabel: { sx: { color: 'rgba(255,255,255,0.7)' } }
-                                        }}
-                                    />
-
-                                    <TextField
-                                        label="Password"
-                                        type="password"
-                                        variant="filled"
-                                        fullWidth
-                                        id="password"
-                                        name="password"
-                                        autoComplete="current-password"
-                                        value={password}
-                                        required
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        slotProps={{
-                                            input: {
-                                                disableUnderline: true,
-                                                startAdornment: <InputAdornment position="start"><Lock sx={{ color: 'white' }} /></InputAdornment>,
-                                                sx: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', color: 'white' }
-                                            },
-                                            inputLabel: { sx: { color: 'rgba(255,255,255,0.7)' } }
-                                        }}
-                                    />
-
-                                    <Button
-                                        variant="contained"
-                                        type="submit"
-                                        size="large"
-                                        disabled={loading}
-                                        sx={{
-                                            py: 2,
+                                        value={role}
+                                        onChange={(e) => setRole(e.target.value)}
+                                        startAdornment={<InputAdornment position="start"><Groups sx={{ color: dark.accent, ml: 1 }} /></InputAdornment>}
+                                        sx={{ 
+                                            bgcolor: dark.inputBg, 
                                             borderRadius: '12px',
-                                            backgroundColor: '#3017d1',
-                                            fontWeight: 'bold',
-                                            fontSize: '1.1rem',
-                                            textTransform: 'none',
-                                            boxShadow: '0 10px 20px rgba(48, 23, 209, 0.3)',
-                                            '&:hover': { backgroundColor: '#4527f6', transform: 'translateY(-2px)' },
-                                            transition: 'all 0.3s ease'
+                                            color: 'white',
+                                            '& .MuiOutlinedInput-notchedOutline': { borderColor: dark.border },
+                                            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.2)' },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: dark.accent },
+                                            '& .MuiSelect-select': { py: 2 }
                                         }}
                                     >
-                                        {loading ? (
-                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                                                <CircularProgress size={24} color="inherit" />
-                                                {slowMessage && (
-                                                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.7rem' }}>
-                                                        ⏳ Server warming up, please wait...
-                                                    </Typography>
-                                                )}
-                                            </Box>
-                                        ) : 'Enter Portal'}
-                                    </Button>
+                                        <MenuItem value="student">Student Account</MenuItem>
+                                        <MenuItem value="teacher">Teacher Account</MenuItem>
+                                        <MenuItem value="college">College Admin</MenuItem>
+                                        <MenuItem value="parent">Parent Portal</MenuItem>
+                                        <MenuItem value="staff">Staff Member</MenuItem>
+                                        <MenuItem value="driver">Fleet Driver</MenuItem>
+                                    </Select>
                                 </Box>
-                            </Paper>
-                        </Fade>
-                    </Grid>
+
+                                {/* ID Field */}
+                                <Box sx={{ textAlign: 'left' }}>
+                                    <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 700, ml: 1, mb: 1, display: 'block', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                        Identification Identifier *
+                                    </Typography>
+                                    <TextField
+                                        fullWidth
+                                        placeholder="admin"
+                                        value={id}
+                                        onChange={(e) => setId(e.target.value)}
+                                        required
+                                        InputProps={{
+                                            startAdornment: <InputAdornment position="start"><AccountCircle sx={{ color: dark.accent, ml: 1 }} /></InputAdornment>,
+                                            sx: { 
+                                                bgcolor: dark.inputBg, 
+                                                borderRadius: '12px',
+                                                color: 'white',
+                                                '& .MuiOutlinedInput-notchedOutline': { borderColor: dark.border },
+                                                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.2)' },
+                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: dark.accent },
+                                                py: 0.5
+                                            }
+                                        }}
+                                    />
+                                </Box>
+
+                                {/* Password Field */}
+                                <Box sx={{ textAlign: 'left' }}>
+                                    <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 700, ml: 1, mb: 1, display: 'block', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                        Secure Password *
+                                    </Typography>
+                                    <TextField
+                                        fullWidth
+                                        type="password"
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        InputProps={{
+                                            startAdornment: <InputAdornment position="start"><Lock sx={{ color: dark.accent, ml: 1 }} /></InputAdornment>,
+                                            sx: { 
+                                                bgcolor: dark.inputBg, 
+                                                borderRadius: '12px',
+                                                color: 'white',
+                                                '& .MuiOutlinedInput-notchedOutline': { borderColor: dark.border },
+                                                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.2)' },
+                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: dark.accent },
+                                                py: 0.5
+                                            }
+                                        }}
+                                    />
+                                </Box>
+
+                                <Button
+                                    fullWidth
+                                    type="submit"
+                                    disabled={loading}
+                                    sx={{
+                                        mt: 2,
+                                        py: 2,
+                                        borderRadius: '12px',
+                                        bgcolor: dark.accent,
+                                        color: 'white',
+                                        fontWeight: 900,
+                                        fontSize: '1rem',
+                                        textTransform: 'none',
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            bgcolor: '#4f46e5',
+                                            boxShadow: `0 0 20px ${dark.accent}66`
+                                        }
+                                    }}
+                                >
+                                    {loading ? (
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                            <CircularProgress size={20} color="inherit" />
+                                            {slowMessage && <Typography variant="caption">Warming server...</Typography>}
+                                        </Box>
+                                    ) : (
+                                        <Stack direction="row" alignItems="center" spacing={1}>
+                                            <span>Enter Portal</span>
+                                            <ArrowForward sx={{ fontSize: 20 }} />
+                                        </Stack>
+                                    )}
+                                </Button>
+
+                                <Typography variant="caption" sx={{ mt: 8, color: 'rgba(255,255,255,0.2)', fontWeight: 600 }}>
+                                    © 2026 CampuZen Education Solutions. All Rights Reserved.
+                                </Typography>
+                            </Box>
+                        </Box>
+                    </Fade>
                 </Grid>
-            </Container>
+            </Grid>
         </Box>
     );
 };
