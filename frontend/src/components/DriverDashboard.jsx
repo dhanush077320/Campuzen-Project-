@@ -43,7 +43,9 @@ const DriverDashboard = () => {
     const geocodeAddress = async (address) => {
         if (!address) return null;
         try {
-            const res = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`, {
+            // Append region to search query to avoid results from other states/countries
+            const searchQuery = `${address}, Kerala, India`;
+            const res = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`, {
                 headers: { 'Accept-Language': 'en' }
             });
             if (res.data && res.data.length > 0) {
@@ -564,6 +566,20 @@ const DriverDashboard = () => {
                                     currentLocation={currentLocation}
                                     trackedBus={user}
                                 />
+                                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                                   <Button 
+                                       size="small"
+                                       onClick={() => {
+                                           if (window.confirm("Reset journey progress? This will clear all 'Reached' stops.")) {
+                                               window.location.reload();
+                                           }
+                                       }}
+                                       sx={{ color: dark.accent, borderColor: dark.accent }}
+                                       variant="outlined"
+                                   >
+                                       Reset Journey
+                                   </Button>
+                                </Box>
                             </Box>
                         </Box>
 
