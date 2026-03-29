@@ -66,7 +66,7 @@ const UnifiedLogin = () => {
                 {!isMobile && (
                     <Grid item md={6} sx={{ 
                         position: 'relative',
-                        backgroundImage: `linear-gradient(rgba(5, 10, 20, 0.75), rgba(5, 10, 20, 0.9)), url("${CampusBg}")`,
+                        backgroundImage: `linear-gradient(rgba(5, 10, 20, 0.5), rgba(5, 10, 20, 0.7)), url("${CampusBg}")`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         display: 'flex',
