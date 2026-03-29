@@ -539,6 +539,7 @@ const DriverDashboard = () => {
                                     routeDetails={routeDetails} 
                                     currentLocation={currentLocation}
                                     trackedBus={user}
+                                    hideNavigateButton={true}
                                 />
                                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
                                    <Button 

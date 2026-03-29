@@ -40,7 +40,7 @@ const RecenterMap = ({ coords }) => {
     return null;
 };
 
-const MapView = ({ routeDetails, currentLocation, trackedBus }) => {
+const MapView = ({ routeDetails, currentLocation, trackedBus, hideNavigateButton = false }) => {
     // Determine initial center
     const initialCenter = useMemo(() => {
         if (currentLocation?.lat) return [currentLocation.lat, currentLocation.lng];
@@ -84,25 +84,27 @@ const MapView = ({ routeDetails, currentLocation, trackedBus }) => {
                             <Box sx={{ textAlign: 'center', minWidth: 160 }}>
                                 <Typography sx={{ fontWeight: 900, color: '#ff3d71', mb: 0.5 }}>LIVE POSITION</Typography>
                                 <Typography variant="caption" sx={{ display: 'block', mb: 1.5, fontWeight: 700 }}>Bus #{trackedBus?.busNumber}</Typography>
-                                <Button 
-                                    variant="contained" 
-                                    size="small" 
-                                    onClick={() => {
-                                        const url = `https://www.google.com/maps/dir/?api=1&destination=${currentLocation.lat},${currentLocation.lng}`;
-                                        window.open(url, '_blank', 'noopener,noreferrer');
-                                    }}
-                                    sx={{ 
-                                        borderRadius: '8px', 
-                                        textTransform: 'none', 
-                                        fontWeight: 800,
-                                        bgcolor: '#4285F4',
-                                        '&:hover': { bgcolor: '#3367d6' },
-                                        boxShadow: '0 4px 10px rgba(66, 133, 244, 0.4)',
-                                        width: '100%'
-                                    }}
-                                >
-                                    Navigate
-                                </Button>
+                                {!hideNavigateButton && (
+                                    <Button 
+                                        variant="contained" 
+                                        size="small" 
+                                        onClick={() => {
+                                            const url = `https://www.google.com/maps/dir/?api=1&destination=${currentLocation.lat},${currentLocation.lng}`;
+                                            window.open(url, '_blank', 'noopener,noreferrer');
+                                        }}
+                                        sx={{ 
+                                            borderRadius: '8px', 
+                                            textTransform: 'none', 
+                                            fontWeight: 800,
+                                            bgcolor: '#4285F4',
+                                            '&:hover': { bgcolor: '#3367d6' },
+                                            boxShadow: '0 4px 10px rgba(66, 133, 244, 0.4)',
+                                            width: '100%'
+                                        }}
+                                    >
+                                        Navigate
+                                    </Button>
+                                )}
                             </Box>
                         </Popup>
                     </Marker>
