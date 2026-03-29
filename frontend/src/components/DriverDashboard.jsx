@@ -13,7 +13,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import LinearBusTracker from './LinearBusTracker';
+import MapView from './MapView';
 
 const dark = {
     bg: '#050a14',
@@ -389,56 +389,7 @@ const DriverDashboard = () => {
                                     ))}
                                 </Grid>
 
-                                <Divider sx={{ my: 4, borderColor: 'rgba(255,255,255,0.1)' }} />
-                                <Typography variant="h6" sx={{ color: dark.accent, fontWeight: 900, mb: 3, textTransform: 'uppercase' }}>Assigned Route Information</Typography>
-                                <Grid container spacing={3}>
-                                    {[
-                                        { label: 'STARTING POINT', value: user?.startingPoint, coords: routeDetails?.start, color: '#4dabf5' },
-                                        { label: 'NEXT DESTINATION', value: user?.nextDestination, coords: null, color: '#ff9800' }, // Next dest is dynamic, typically same as a stop or end
-                                        { label: 'END POINT', value: user?.endPoint, coords: routeDetails?.end, color: '#f44336' }
-                                    ].map((route, idx) => (
-                                        <Grid item xs={12} sm={4} key={idx}>
-                                            <Paper sx={{ p: 2, borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.02)', border: `1px solid ${dark.border}`, minHeight: '100px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                                <Typography variant="caption" sx={{ color: route.color, fontWeight: 900, mb: 0.5 }}>{route.label}</Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 800, color: 'white', mb: route.coords ? 0.5 : 0 }}>{route.value || 'N/A'}</Typography>
-                                                {route.coords && (
-                                                    <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 700, fontStyle: 'italic' }}>
-                                                        {route.coords.lat.toFixed(4)}, {route.coords.lng.toFixed(4)}
-                                                    </Typography>
-                                                )}
-                                            </Paper>
-                                        </Grid>
-                                    ))}
-                                    {user?.stops?.length > 0 && (
-                                        <Grid item xs={12}>
-                                             <Paper sx={{ p: 2, borderRadius: '16px', bgcolor: 'rgba(255,255,255,0.02)', border: `1px solid ${dark.border}` }}>
-                                                <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 900 }}>PLANNED STOPS</Typography>
-                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1.5 }}>
-                                                    {user.stops.map((stop, i) => {
-                                                        const stopCoords = routeDetails?.stops?.find(s => s.name === stop);
-                                                        return (
-                                                            <Chip 
-                                                                key={i} 
-                                                                label={`${stop}${stopCoords ? ` (${stopCoords.lat.toFixed(3)}, ${stopCoords.lng.toFixed(3)})` : ''}`} 
-                                                                size="small" 
-                                                                sx={{ 
-                                                                    bgcolor: 'rgba(124, 77, 255, 0.12)', 
-                                                                    color: dark.accent, 
-                                                                    fontWeight: 800, 
-                                                                    height: 'auto',
-                                                                    py: 0.5,
-                                                                    px: 1,
-                                                                    '& .MuiChip-label': { whiteSpace: 'normal', py: 0.5 },
-                                                                    border: '1px solid rgba(124, 77, 255, 0.3)' 
-                                                                }} 
-                                                            />
-                                                        );
-                                                    })}
-                                                </Box>
-                                            </Paper>
-                                        </Grid>
-                                    )}
-                                </Grid>
+
                              </Box>
                         </Paper>
                     )}
@@ -583,8 +534,8 @@ const DriverDashboard = () => {
                             '&::-webkit-scrollbar-track': { background: 'transparent' },
                             '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.1)', borderRadius: '10px' }
                         }}>
-                            <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-                                <LinearBusTracker 
+                            <Box sx={{ maxWidth: 1200, width: '100%', mx: 'auto' }}>
+                                <MapView 
                                     routeDetails={routeDetails} 
                                     currentLocation={currentLocation}
                                     trackedBus={user}
@@ -605,118 +556,13 @@ const DriverDashboard = () => {
                                 </Box>
                             </Box>
                         </Box>
-
-                        {/* Mobile view info card (Moved inside the flow for mobile) */}
-                        {isDutyOn && user && (
-                            <Box sx={{ display: { xs: 'block', md: 'none' }, mb: 4 }}>
-                                {/* Render the sidebar content here for mobile */}
-                                <Paper elevation={24} sx={{ 
-                                    p: 3, 
-                                    borderRadius: '24px', 
-                                    bgcolor: 'rgba(15, 23, 42, 0.95)', 
-                                    border: `1px solid ${dark.border}`, 
-                                    backdropFilter: 'blur(15px)'
-                                }}>
-                                    <Typography variant="overline" sx={{ color: dark.accent, fontWeight: 900, letterSpacing: '2px' }}>LIVE ITINERARY</Typography>
-                                    <Divider sx={{ my: 1.5, borderColor: dark.border }} />
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="caption" sx={{ color: dark.accent, fontWeight: 800, display: 'block' }}>STARTING POINT</Typography>
-                                        <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.startingPoint || 'NOT SET'}</Typography>
-                                    </Box>
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="caption" sx={{ color: '#ff9800', fontWeight: 800, display: 'block' }}>NEXT DESTINATION</Typography>
-                                        <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.nextDestination || 'NOT SET'}</Typography>
-                                    </Box>
-                                    <Box>
-                                        <Typography variant="caption" sx={{ color: dark.success, fontWeight: 800, display: 'block' }}>END POINT</Typography>
-                                        <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.endPoint || 'NOT SET'}</Typography>
-                                    </Box>
-                                </Paper>
-                            </Box>
-                        )}
                         
                         <Box sx={{ height: { xs: 100, md: 200 } }} /> 
                     </Container>
                 </Box>
             )}
 
-            {/* Desktop Floating Sidebar - Hidden on search/mobile */}
-            {isDutyOn && user && view === 'map' && (
-                <Box sx={{ 
-                    position: 'absolute', 
-                    top: 100, 
-                    right: 30, 
-                    bottom: 150, 
-                    zIndex: 10, 
-                    width: 320,
-                    display: { xs: 'none', md: 'flex' },
-                    flexDirection: 'column'
-                }}>
-                    <Paper elevation={24} sx={{ 
-                        p: 3, 
-                        borderRadius: '24px', 
-                        bgcolor: 'rgba(15, 23, 42, 0.95)', 
-                        border: `1px solid ${dark.border}`, 
-                        backdropFilter: 'blur(15px)',
-                        flex: 1,
-                        overflowY: 'auto',
-                        '&::-webkit-scrollbar': { width: '4px' },
-                        '&::-webkit-scrollbar-track': { background: 'transparent' },
-                        '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.1)', borderRadius: '4px' }
-                    }}>
-                        <Typography variant="overline" sx={{ color: dark.accent, fontWeight: 900, letterSpacing: '2px' }}>LIVE ITINERARY</Typography>
-                        <Divider sx={{ my: 1.5, borderColor: dark.border }} />
-                        
-                        <Box sx={{ mb: 2 }}>
-                            <Typography variant="caption" sx={{ color: dark.accent, fontWeight: 800, display: 'block' }}>STARTING POINT</Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.startingPoint || 'NOT SET'}</Typography>
-                            {routeDetails?.start && (
-                                <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 700, opacity: 0.8 }}>
-                                    COORD: {routeDetails.start.lat.toFixed(4)}, {routeDetails.start.lng.toFixed(4)}
-                                </Typography>
-                            )}
-                        </Box>
 
-                        <Box sx={{ mb: 2 }}>
-                            <Typography variant="caption" sx={{ color: '#ff9800', fontWeight: 800, display: 'block' }}>NEXT DESTINATION</Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.nextDestination || 'NOT SET'}</Typography>
-                        </Box>
-
-                        {user.stops && user.stops.length > 0 && (
-                            <Box sx={{ mb: 2 }}>
-                                <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 800, display: 'block' }}>PLANNED STOPS</Typography>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
-                                    {user.stops.map((stop, i) => {
-                                        const stopCoords = routeDetails?.stops?.find(s => s.name === stop);
-                                        return (
-                                            <Box key={i} sx={{ borderLeft: `2px solid ${dark.border}`, pl: 2, py: 0.5 }}>
-                                                <Typography variant="body2" sx={{ fontWeight: 800, color: dark.textSecondary, display: 'flex', alignItems: 'center' }}>
-                                                    {stop}
-                                                </Typography>
-                                                {stopCoords && (
-                                                    <Typography variant="caption" sx={{ color: dark.textSecondary, fontSize: '0.65rem', fontStyle: 'italic', display: 'block', opacity: 0.6 }}>
-                                                        {stopCoords.lat.toFixed(4)}, {stopCoords.lng.toFixed(4)}
-                                                    </Typography>
-                                                )}
-                                            </Box>
-                                        );
-                                    })}
-                                </Box>
-                            </Box>
-                        )}
-
-                        <Box>
-                            <Typography variant="caption" sx={{ color: dark.success, fontWeight: 800, display: 'block' }}>END POINT</Typography>
-                            <Typography variant="body1" sx={{ fontWeight: 900, color: dark.text }}>{user.endPoint || 'NOT SET'}</Typography>
-                            {routeDetails?.end && (
-                                <Typography variant="caption" sx={{ color: dark.textSecondary, fontWeight: 700, opacity: 0.8 }}>
-                                    COORD: {routeDetails.end.lat.toFixed(4)}, {routeDetails.end.lng.toFixed(4)}
-                                </Typography>
-                            )}
-                        </Box>
-                    </Paper>
-                </Box>
-            )}
 
             {/* Overlay Content (Gallery, Feedback, Profile) */}
             {renderOverlayContent()}

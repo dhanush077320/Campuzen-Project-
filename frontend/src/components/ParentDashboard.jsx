@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import LinearBusTracker from './LinearBusTracker';
+import MapView from './MapView';
 
 const drawerWidth = 240;
 
@@ -910,10 +910,9 @@ const ParentDashboard = () => {
                         </Box>
                     </Box>
 
-                    <LinearBusTracker 
+                    <MapView 
                         routeDetails={routeDetails} 
                         currentLocation={{lat: trackedBus.latitude, lng: trackedBus.longitude}} 
-                        boardingStopName={enrollment?.busStop}
                         trackedBus={trackedBus}
                     />
                 </Paper>

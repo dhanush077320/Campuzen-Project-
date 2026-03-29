@@ -143,44 +143,6 @@ const CollegeDashboard = () => {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
 
-    const [driverData, setDriverData] = useState({
-        startingPoint: '',
-        nextDestination: '',
-        endPoint: '',
-        stops: []
-    });
-
-    const handleAddStop = () => {
-        setDriverData({ ...driverData, stops: [...driverData.stops, ''] });
-    };
-
-    const handleStopChange = (index, value) => {
-        const newStops = [...driverData.stops];
-        newStops[index] = value;
-        setDriverData({ ...driverData, stops: newStops });
-    };
-
-    const handleRemoveStop = (index) => {
-        const newStops = driverData.stops.filter((_, i) => i !== index);
-        setDriverData({ ...driverData, stops: newStops });
-    };
-
-    const getCoordinates = async (address) => {
-        if (!address) return null;
-        try {
-            const response = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
-            if (response.data && response.data.length > 0) {
-                return {
-                    lat: parseFloat(response.data[0].lat),
-                    lng: parseFloat(response.data[0].lon)
-                };
-            }
-        } catch (error) {
-            console.error("Geocoding error for:", address, error);
-        }
-        return null;
-    };
-
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
     };
@@ -375,24 +337,6 @@ const CollegeDashboard = () => {
         try {
             const payload = { ...editingUser };
             
-            if (editingUser.role === 'driver') {
-                // Geocode itinerary if it's a driver
-                payload.startingPointCoords = await getCoordinates(editingUser.startingPoint);
-                payload.nextDestinationCoords = await getCoordinates(editingUser.nextDestination);
-                payload.endPointCoords = await getCoordinates(editingUser.endPoint);
-                
-                const stopCoords = [];
-                if (editingUser.stops && Array.isArray(editingUser.stops)) {
-                    for (const stop of editingUser.stops) {
-                        if (stop && stop.trim()) {
-                            const coords = await getCoordinates(stop);
-                            if (coords) stopCoords.push({ ...coords, name: stop });
-                        }
-                    }
-                }
-                payload.stopCoords = stopCoords;
-            }
-
             await axios.patch(`${import.meta.env.VITE_API_URL}/api/users/${editingUser._id}`, payload);
             alert("User updated successfully");
             handleCloseEdit();
@@ -429,22 +373,6 @@ const CollegeDashboard = () => {
             if (formData.role === 'driver') {
                 const nextBusRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/next-bus-number`);
                 payload.busNumber = nextBusRes.data.nextBusNumber;
-                payload.startingPoint = driverData.startingPoint;
-                payload.nextDestination = driverData.nextDestination;
-                payload.endPoint = driverData.endPoint;
-                payload.stops = driverData.stops;
-
-                // Geocode itinerary
-                payload.startingPointCoords = await getCoordinates(driverData.startingPoint);
-                payload.nextDestinationCoords = await getCoordinates(driverData.nextDestination);
-                payload.endPointCoords = await getCoordinates(driverData.endPoint);
-                
-                const stopCoords = [];
-                for (const stop of driverData.stops) {
-                    const coords = await getCoordinates(stop);
-                    if (coords) stopCoords.push({ ...coords, name: stop });
-                }
-                payload.stopCoords = stopCoords;
             }
             await axios.post(`${import.meta.env.VITE_API_URL}/api/users`, payload);
             
@@ -483,13 +411,6 @@ const CollegeDashboard = () => {
                 subjects: ''
             });
             setTeacherData({ department: '', subject: '' });
-            setDriverData({
-                startingPoint: '',
-                nextDestination: '',
-                endPoint: '',
-                stops: []
-            });
-
             fetchUsers();
         } catch (error) {
             alert(error.response?.data?.message || 'Failed to create user or enroll student');
@@ -1549,79 +1470,6 @@ const CollegeDashboard = () => {
                             </>
                         )}
 
-                        {formData.role === 'driver' && (
-                            <>
-                                <Grid size={12}>
-                                    <Divider sx={{ borderColor: dark.border, my: 2 }} />
-                                    <Typography variant="h6" sx={{ color: dark.text }}>Driver Itinerary Details</Typography>
-                                </Grid>
-                                <Grid size={{ xs: 12, sm: 6 }}>
-                                    <TextField
-                                        fullWidth
-                                        label="Starting Point"
-                                        required
-                                        value={driverData.startingPoint}
-                                        onChange={(e) => setDriverData({ ...driverData, startingPoint: e.target.value })}
-                                        sx={textFieldDarkSx}
-                                    />
-                                </Grid>
-                                <Grid size={{ xs: 12, sm: 6 }}>
-                                    <TextField
-                                        fullWidth
-                                        label="Next Destination"
-                                        required
-                                        value={driverData.nextDestination}
-                                        onChange={(e) => setDriverData({ ...driverData, nextDestination: e.target.value })}
-                                        sx={textFieldDarkSx}
-                                    />
-                                </Grid>
-                                <Grid size={{ xs: 12, sm: 12 }}>
-                                    <Box sx={{ mb: 2 }}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                            <Typography sx={{ color: dark.textSecondary, fontWeight: 700 }}>Additional Destinations (Stops)</Typography>
-                                            <Button 
-                                                size="small" 
-                                                startIcon={<AddIcon />} 
-                                                onClick={handleAddStop}
-                                                sx={{ color: dark.accent, fontWeight: 700 }}
-                                            >
-                                                Add Stop
-                                            </Button>
-                                        </Box>
-                                        <Grid container spacing={2}>
-                                            {driverData.stops.map((stop, index) => (
-                                                <Grid size={{ xs: 12, sm: 6 }} key={index}>
-                                                    <TextField
-                                                        fullWidth
-                                                        label={`Stop ${index + 1}`}
-                                                        value={stop}
-                                                        onChange={(e) => handleStopChange(index, e.target.value)}
-                                                        sx={textFieldDarkSx}
-                                                        InputProps={{
-                                                            endAdornment: (
-                                                                <IconButton size="small" onClick={() => handleRemoveStop(index)} sx={{ color: dark.danger }}>
-                                                                    <Delete fontSize="small" />
-                                                                </IconButton>
-                                                            )
-                                                        }}
-                                                    />
-                                                </Grid>
-                                            ))}
-                                        </Grid>
-                                    </Box>
-                                </Grid>
-                                <Grid size={{ xs: 12, sm: 6 }}>
-                                    <TextField
-                                        fullWidth
-                                        label="End Point"
-                                        required
-                                        value={driverData.endPoint}
-                                        onChange={(e) => setDriverData({ ...driverData, endPoint: e.target.value })}
-                                        sx={textFieldDarkSx}
-                                    />
-                                </Grid>
-                            </>
-                        )}
 
                         <Grid size={12}>
                             <Button variant="contained" type="submit" startIcon={<AddIcon />} sx={{ backgroundColor: dark.accent, px: 4, py: 1.5, borderRadius: '10px', '&:hover': { backgroundColor: '#6a3de8' } }}>
@@ -2021,69 +1869,6 @@ const CollegeDashboard = () => {
                                 label="Subjects (comma separated)"
                                 value={editingUser?.subject || ''}
                                 onChange={(e) => setEditingUser({ ...editingUser, subject: e.target.value })}
-                                sx={textFieldDarkSx}
-                            />
-                        </>
-                    )}
-                    {editingUser?.role === 'driver' && (
-                        <>
-                            <Divider sx={{ borderColor: dark.border, my: 1 }} />
-                            <Typography sx={{ color: dark.text, fontWeight: 700 }}>Itinerary Details</Typography>
-                            <TextField
-                                fullWidth
-                                label="Starting Point"
-                                value={editingUser?.startingPoint || ''}
-                                onChange={(e) => setEditingUser({ ...editingUser, startingPoint: e.target.value })}
-                                sx={textFieldDarkSx}
-                            />
-                            <TextField
-                                fullWidth
-                                label="Next Destination"
-                                value={editingUser?.nextDestination || ''}
-                                onChange={(e) => setEditingUser({ ...editingUser, nextDestination: e.target.value })}
-                                sx={textFieldDarkSx}
-                            />
-                            <Box>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                    <Typography variant="caption" sx={{ color: dark.textSecondary }}>Stops</Typography>
-                                    <Button size="small" startIcon={<AddIcon />} onClick={() => setEditingUser({...editingUser, stops: [...(editingUser.stops || []), '']})}>
-                                        Add Stop
-                                    </Button>
-                                </Box>
-                                <Grid container spacing={2}>
-                                    {(editingUser.stops || []).map((stop, idx) => (
-                                        <Grid item xs={12} key={idx}>
-                                            <TextField
-                                                fullWidth
-                                                size="small"
-                                                label={`Stop ${idx + 1}`}
-                                                value={stop}
-                                                onChange={(e) => {
-                                                    const newStops = [...editingUser.stops];
-                                                    newStops[idx] = e.target.value;
-                                                    setEditingUser({ ...editingUser, stops: newStops });
-                                                }}
-                                                sx={textFieldDarkSx}
-                                                InputProps={{
-                                                    endAdornment: (
-                                                        <IconButton size="small" onClick={() => {
-                                                            const newStops = editingUser.stops.filter((_, i) => i !== idx);
-                                                            setEditingUser({ ...editingUser, stops: newStops });
-                                                        }} sx={{ color: dark.danger }}>
-                                                            <Delete fontSize="small" />
-                                                        </IconButton>
-                                                    )
-                                                }}
-                                            />
-                                        </Grid>
-                                    ))}
-                                </Grid>
-                            </Box>
-                            <TextField
-                                fullWidth
-                                label="End Point"
-                                value={editingUser?.endPoint || ''}
-                                onChange={(e) => setEditingUser({ ...editingUser, endPoint: e.target.value })}
                                 sx={textFieldDarkSx}
                             />
                         </>

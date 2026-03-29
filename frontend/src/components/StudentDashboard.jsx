@@ -13,7 +13,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import LinearBusTracker from './LinearBusTracker';
+import MapView from './MapView';
 
 const drawerWidth = 240;
 
@@ -732,10 +732,9 @@ const StudentDashboard = () => {
                         </Box>
                     </Box>
 
-                    <LinearBusTracker 
+                    <MapView 
                         routeDetails={routeDetails} 
                         currentLocation={{lat: trackedBus.latitude, lng: trackedBus.longitude}} 
-                        boardingStopName={enrollment?.assignedStop}
                         trackedBus={trackedBus}
                     />
                 </Paper>
